@@ -450,7 +450,7 @@ input[type=range]{accent-color:var(--amber)}
 .stg.done .sn{background:rgba(143,170,140,.18);color:var(--sage);border-color:rgba(143,170,140,.5)}
 .stg.now{border-color:rgba(243,168,58,.55);box-shadow:0 0 0 1px rgba(243,168,58,.25) inset}
 .stg.now .sn{background:var(--amber);color:#1b140c;border-color:var(--amber)}
-.stg.locked{opacity:.62}
+.stg.closed{opacity:.62}
 #test-area{margin-top:22px}
 .mq-lk{opacity:.45;position:relative}
 .mq-lk::after{content:"🔒";font-size:.7em;margin-inline-start:4px}
@@ -460,7 +460,7 @@ input[type=range]{accent-color:var(--amber)}
 .adm-sub{margin-bottom:10px;padding:16px 18px}
 .adm-res{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:.85rem}
 .adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
-.code{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--amber)}
+.code{user-select:all;-webkit-user-select:all;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--amber)}
 .big-code{font-size:1.25rem}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -950,9 +950,9 @@ function vCourse(){
     if(ACC.err) h+='<p class="rose small">'+ACC.err+'</p>';
   }
   h+='<div class="stages">'+STAGES.map(function(s){
-    var state=s.n<st?"done":(s.n===st?"now":"locked"), open=ACC.mode==="owner"||(ACC.mode==="member"&&ACC.active&&s.n<=st);
+    var state=s.n<st?"done":(s.n===st?"now":"closed"), open=ACC.mode==="owner"||(ACC.mode==="member"&&ACC.active&&s.n<=st);
     var best=ACC.results.filter(function(r){return r.item==="test:stage"+s.n;}).reduce(function(a,r){return Math.max(a,+r.score);},-1);
-    return '<div class="stg '+state+'"><span class="sn">'+(state==="locked"&&!open?lockIcon(16):num(s.n))+'</span><div><b>'+L(s.t[0],s.t[1])+'</b><span class="d">'+L(s.d[0],s.d[1])+'</span>'+(best>=0?'<span class="small '+(best>=80?'ok':'rose')+'">'+L("أعلى درجة بالاختبار: ","Best test score: ")+num(best)+'</span>':'')+'</div>'+(open?'<button class="btn sec" type="button" data-stest="'+s.n+'">'+L("الاختبار","Test")+'</button>':'')+'</div>';
+    return '<div class="stg '+state+'"><span class="sn">'+(state==="closed"&&!open?lockIcon(16):num(s.n))+'</span><div><b>'+L(s.t[0],s.t[1])+'</b><span class="d">'+L(s.d[0],s.d[1])+'</span>'+(best>=0?'<span class="small '+(best>=80?'ok':'rose')+'">'+L("أعلى درجة بالاختبار: ","Best test score: ")+num(best)+'</span>':'')+'</div>'+(open?'<button class="btn sec" type="button" data-stest="'+s.n+'">'+L("الاختبار","Test")+'</button>':'')+'</div>';
   }).join("")+'</div>';
   h+='<div id="test-area"></div></div>';
   return h+pager("course");
@@ -1021,7 +1021,16 @@ function bindAdmin(){
   };
 }
 function alertMsg(m){ var x=document.getElementById("adm-msg"); if(x) x.innerHTML='<p class="rose">'+m+'</p>'; }
-document.addEventListener("click",function(e){ var b=e.target.closest("[data-copy]"); if(b){ var c=b.getAttribute("data-copy"); (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(function(){ b.textContent=L("انتسخ ✓","Copied ✓"); }).catch(function(){ window.prompt("",c); }); } });
+function copyText(c){
+  var ok=false, ta=document.createElement("textarea"); ta.value=c; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+  document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,c.length);
+  try{ ok=document.execCommand("copy"); }catch(e){} document.body.removeChild(ta);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(c).catch(function(){});
+  return ok;
+}
+document.addEventListener("click",function(e){ var b=e.target.closest("[data-copy]"); if(!b) return; var c=b.getAttribute("data-copy"), ok=copyText(c), old=b.getAttribute("data-lbl")||b.textContent; b.setAttribute("data-lbl",old);
+  b.textContent=ok?L("انتسخ ✓","Copied ✓"):L("ما انتسخ، حدّد الكود يدوياً","Select the code manually"); setTimeout(function(){ b.textContent=old; },1800);
+  var sel=b.parentNode&&b.parentNode.querySelector(".code"); if(!ok&&sel){ var r=document.createRange(); r.selectNodeContents(sel); var w=window.getSelection(); w.removeAllRanges(); w.addRange(r); } });
 
 /* ---- owner sign-in (studio) ---- */
 function vOwnerLogin(){
