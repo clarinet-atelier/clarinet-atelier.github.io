@@ -462,6 +462,8 @@ input[type=range]{accent-color:var(--amber)}
 .adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .code{user-select:all;-webkit-user-select:all;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--amber)}
 .big-code{font-size:1.25rem}
+.btn.danger{color:#e58a7a;border-color:rgba(229,138,122,.45);margin-inline-start:auto}
+.btn.danger:hover{border-color:#e58a7a}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -996,7 +998,7 @@ function renderAdmList(){
     var h='<div class="panel adm-sub"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>'+s.name+'</b> <span class="ltr code">'+s.code+'</span>'+(s.phone?' <span class="small ltr">'+s.phone+'</span>':'')+'</div><div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag">'+L("المرحلة ","Stage ")+num(s.stage)+'</span>'+status+'</div></div>';
     h+='<div class="small" style="margin-top:6px">'+L("الاقتراح: ","Suggestion: ")+'<b>'+L("المرحلة ","stage ")+num(sg.st)+'</b> · '+sg.why+(s.note?' · '+s.note:'')+'</div>';
     if(rs.length) h+='<div class="adm-res">'+rs.slice(0,8).map(function(r){ return '<span class="'+(+r.score>=80?'ok':'rose')+'">'+r.item.replace("test:stage",L("اختبار ","test "))+' · '+num(Math.round(+r.score))+'</span>'; }).join("")+'</div>';
-    h+='<div class="adm-act"><select data-rs="'+s.id+'">'+STAGES.map(function(x){return'<option value="'+x.n+'"'+(x.n===sg.st?' selected':'')+'>'+L("المرحلة ","Stage ")+num(x.n)+'</option>';}).join("")+'</select><button class="btn" type="button" data-renew="'+s.id+'">'+L("جدّد ٣٠ يوم","Renew 30 days")+'</button><button class="btn sec" type="button" data-copy="'+s.code+'">'+L("انسخ الكود","Copy code")+'</button>'+(s.device_id?'<button class="btn sec" type="button" data-reset="'+s.id+'">'+L("فك الجهاز","Release device")+'</button>':'')+'</div></div>';
+    h+='<div class="adm-act"><select data-rs="'+s.id+'">'+STAGES.map(function(x){return'<option value="'+x.n+'"'+(x.n===sg.st?' selected':'')+'>'+L("المرحلة ","Stage ")+num(x.n)+'</option>';}).join("")+'</select><button class="btn" type="button" data-renew="'+s.id+'">'+L("جدّد ٣٠ يوم","Renew 30 days")+'</button><button class="btn sec" type="button" data-copy="'+s.code+'">'+L("انسخ الكود","Copy code")+'</button>'+(s.device_id?'<button class="btn sec" type="button" data-reset="'+s.id+'">'+L("فك الجهاز","Release device")+'</button>':'')+'<button class="btn sec danger" type="button" data-del="'+s.id+'" data-name="'+s.name.replace(/"/g,"&quot;")+'">'+L("حذف","Delete")+'</button></div></div>';
     return h; }).join("");
 }
 function admLoad(){
@@ -1018,6 +1020,8 @@ function bindAdmin(){
       adm("/rest/v1/rpc/admin_renew",{p_id:id,p_stage:st,p_days:30}).then(admLoad).catch(function(e2){ alertMsg(accErr(e2.message)); }); }
     else if((b=e.target.closest("[data-reset]"))){ if(!window.confirm(L("أفك الكود من الجهاز الحالي حتى يگدر المشترك يدخل من جهاز ثاني؟","Release this code from its current device so the member can sign in on another?"))) return;
       adm("/rest/v1/rpc/admin_reset_device",{p_id:b.getAttribute("data-reset")}).then(admLoad); }
+    else if((b=e.target.closest("[data-del]"))){ if(!window.confirm(L("تحذف المشترك "+b.getAttribute("data-name")+" نهائياً؟ الكود يبطل يشتغل وتنمسح كل نتائجه، وما تگدر ترجعه.","Delete "+b.getAttribute("data-name")+" for good? The code stops working and all results are erased. This can’t be undone."))) return; b.disabled=true;
+      adm("/rest/v1/subscribers?id=eq."+encodeURIComponent(b.getAttribute("data-del")),null,"DELETE").then(admLoad).catch(function(e2){ b.disabled=false; alertMsg(accErr(e2.message)); }); }
   };
 }
 function alertMsg(m){ var x=document.getElementById("adm-msg"); if(x) x.innerHTML='<p class="rose">'+m+'</p>'; }
