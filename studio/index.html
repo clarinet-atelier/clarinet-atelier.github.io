@@ -470,6 +470,7 @@ input[type=range]{accent-color:var(--amber)}
 .adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .code{user-select:all;-webkit-user-select:all;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--amber)}
 .big-code{font-size:1.25rem}
+.legal .panel{margin-bottom:14px}.legal h2{font-size:1.25rem;margin:0 0 8px}.legal ul{margin:0;padding-inline-start:20px;color:#d9cdbd;line-height:1.8}
 .btn.danger{color:#e58a7a;border-color:rgba(229,138,122,.45);margin-inline-start:auto}
 .btn.danger:hover{border-color:#e58a7a}
 
@@ -814,7 +815,7 @@ var ROUTES=[
  {id:"course",t:["مسيرتي","My course"], d:["مراحلك، اختباراتك، اشتراكك","Your stages, tests and membership"]},
  {id:"admin",t:["لوحة التحكم","Control panel"], d:["الأكواد، النتائج، التجديد","Codes, results, renewals"]}
 ];
-function route(){ var h=(location.hash||"").replace("#",""); return ROUTES.some(function(r){return r.id===h;})?h:"start"; }
+function route(){ var h=(location.hash||"").replace("#",""); return (h==="privacy"||ROUTES.some(function(r){return r.id===h;}))?h:"start"; }
 function idx(id){ for(var i=0;i<ROUTES.length;i++) if(ROUTES[i].id===id) return i; return 0; }
 var IS_STUDIO=true;
 
@@ -838,7 +839,7 @@ function supa(path,body,tok,method){
     return r.text().then(function(t){ var j=null; try{ j=t?JSON.parse(t):null; }catch(e){} if(!r.ok){ var m=(j&&(j.message||j.error_description||j.msg))||("HTTP "+r.status); throw new Error(m); } return j; }); });
 }
 function rpc(fn,args,tok){ return supa("/rest/v1/rpc/"+fn,args||{},tok); }
-function accErr(m){ return ({bad_code:L("الكود غلط، تأكد منه.","That code isn’t valid."),other_device:L("هذا الكود مربوط بجهاز ثاني. راسلنا حتى نفكّه.","This code is linked to another device. Contact us to move it."),expired:L("اشتراكك خلص.","Your membership has ended."),bad_device:L("صار خلل بالجهاز، حدّث الصفحة.","Device error, reload the page."),"Invalid login credentials":L("الإيميل أو الباسورد غلط.","Wrong email or password.")})[m]||(L("ما گدرت أتصل، تأكد من الإنترنت. ","Couldn’t connect; check your internet. ")+'<span class="ltr small">('+m+')</span>'); }
+function accErr(m){ return ({bad_code:L("الكود غلط، تأكد منه.","That code isn’t valid."),other_device:L("هذا الكود مربوط بجهاز ثاني. تواصل ويه أستاذك حتى يفكّه.","This code is linked to another device. Ask your teacher to release it."),expired:L("اشتراكك خلص.","Your membership has ended."),bad_device:L("صار خلل بالجهاز، حدّث الصفحة.","Device error, reload the page."),"Invalid login credentials":L("الإيميل أو الباسورد غلط.","Wrong email or password.")})[m]||(L("ما گدرت أتصل، تأكد من الإنترنت. ","Couldn’t connect; check your internet. ")+'<span class="ltr small">('+m+')</span>'); }
 var LESSONS=[];
 function setPieces(rows){ rows=rows||[]; PIECES=rows.filter(function(r){return r.kind==="piece";}).map(function(r){return r.data;}); LESSONS=rows.filter(function(r){return r.kind==="lesson";}).map(function(r){ var d=r.data; d.stage=r.stage; return d; }); }
 
@@ -896,7 +897,7 @@ function vLocked(id){
   var h=pageHead(id,L(r.t[0],r.t[1]),L(r.d[0],r.d[1]));
   h+='<div class="block"><div class="panel locked"><div class="lk-ic">'+lockIcon(34)+'</div>';
   if(ACC.mode==="member"&&!ACC.active){
-    h+='<h2>'+L("اشتراكك خلص","Your membership has ended")+'</h2><p>'+L("راسلنا حتى نجدده. تقدّمك ونتائجك محفوظة.","Contact us to renew. Your progress and results are saved.")+'</p>';
+    h+='<h2>'+L("اشتراكك خلص","Your membership has ended")+'</h2><p>'+L("تواصل ويه أستاذك حتى يجدده. تقدّمك ونتائجك محفوظة.","Ask your teacher to renew it. Your progress and results are saved.")+'</p>';
   } else if(ACC.mode==="member"){
     h+='<h2>'+L("ينفتح بالمرحلة ","Opens at stage ")+num(need)+'</h2><p>'+L("كمّل مرحلتك الحالية ونجح باختبارها، وبعدها ينفتحلك هذا الدرس.","Finish your current stage and pass its test, and this lesson opens.")+'</p>';
     h+='<div class="btns" style="justify-content:center"><a class="btn" href="#course">'+L("مسيرتي","My course")+'</a></div>';
@@ -981,7 +982,7 @@ function vCourse(){
   } else if(ACC.mode==="member"){
     h+='<div class="panel acc-card"><div><div class="overline">'+L("أهلاً","Welcome")+'</div><div class="big">'+ACC.name+'</div></div>';
     h+='<div class="acc-meta"><span class="tag">'+L("المرحلة ","Stage ")+num(ACC.realStage)+L(" من ٥"," of 5")+'</span>'+(ACC.active?'<span class="tag cer">'+L("باقي ","")+num(ACC.days)+L(" يوم"," days left")+'</span>':'<span class="tag rose">'+L("الاشتراك خلص","Membership ended")+'</span>')+'<button class="linkbtn small" type="button" id="acc-out">'+L("خروج","Sign out")+'</button></div></div>';
-    if(!ACC.active) h+='<p class="rose" style="margin:12px 0">'+L("اشتراكك خلص. راسلنا حتى نجدده، وتقدّمك محفوظ.","Your membership has ended. Contact us to renew; your progress is saved.")+'</p>';
+    if(!ACC.active) h+='<p class="rose" style="margin:12px 0">'+L("اشتراكك خلص. تواصل ويه أستاذك حتى يجدده، وتقدّمك محفوظ.","Your membership has ended. Ask your teacher to renew it; your progress is saved.")+'</p>';
     if(ACC.err) h+='<p class="rose small">'+ACC.err+'</p>';
   }
   var got={}; ACC.results.forEach(function(r){ if(+r.score>=80) got[r.item]=1; });
@@ -1083,6 +1084,37 @@ function bindOwnerLogin(){ var f=document.getElementById("own-form"); if(f) f.on
 function lockMqChips(){ document.querySelectorAll("[data-mq],[data-exmq]").forEach(function(b){ var id=b.getAttribute("data-mq")||b.getAttribute("data-exmq"); if(!mqOpen(id)){ b.classList.add("mq-lk"); b.title=L("ينفتح بالمرحلة ","Opens at stage ")+num(MQ_STAGE[id]); } }); }
 document.addEventListener("click",function(e){ var b=e.target.closest(".mq-lk"); if(b){ e.stopPropagation(); e.preventDefault(); var id=b.getAttribute("data-mq")||b.getAttribute("data-exmq"); b.classList.add("shake"); setTimeout(function(){b.classList.remove("shake");},450); var p=document.getElementById(b.hasAttribute("data-mq")?"maqam-panel":"ex-live"); if(p&&!b.hasAttribute("data-mq")) p.innerHTML='<span class="rose">'+L("مقام ","Maqam ")+b.textContent+L(" ينفتح بالمرحلة "," opens at stage ")+num(MQ_STAGE[id])+'</span>'; } },true);
 function firstOpenMq(cur){ if(mqOpen(cur)) return cur; for(var i=0;i<MAQAM.length;i++) if(mqOpen(MAQAM[i].id)) return MAQAM[i].id; return cur; }
+
+/* ---- privacy & terms ---- */
+function vPrivacy(){
+  var h='<div class="overline">'+L("أتيليه الكلارينيت","Clarinet Atelier")+'</div><h1 class="page-title">'+L("الخصوصية وشروط الاستخدام","Privacy & terms of use")+'</h1><p class="page-lead">'+L("بكلام بسيط: شنو نحفظ، وشنو ما نحفظ، وشلون يشتغل الاشتراك.","In plain words: what we keep, what we don’t, and how membership works.")+'</p><div class="block legal">';
+  var sec=function(t,items){ return '<div class="panel"><h2>'+t+'</h2><ul>'+items.map(function(x){return'<li>'+x+'</li>';}).join("")+'</ul></div>'; };
+  h+=sec(L("المايك","The microphone"),[
+    L("الموقع يطلب المايك بس من تضغط زر يحتاجه: التيونر، العزف ويه المايك، الاختبارات، ومحلل الألحان.","The site asks for the microphone only when you press a button that needs it: the tuner, play-along, tests and the melody analyzer."),
+    L("الصوت ينحلل داخل متصفحك على جهازك. ما ينسجل، وما ينرفع لأي خادم، وما يسمعه أحد.","Sound is analysed inside your browser, on your device. It is not recorded, not uploaded to any server, and nobody listens to it."),
+    L("الملف الصوتي اللي ترفعه للمحلل هم ينحلل على جهازك وما يطلع منه.","An audio file you give the analyzer is also processed on your device and never leaves it."),
+    L("تگدر تمنع المايك بأي وقت من إعدادات المتصفح.","You can block the microphone at any time in your browser settings.")]);
+  h+=sec(L("شنو نحفظ","What we keep"),[
+    L("كود الاشتراك، والاسم اللي سجّله الأستاذ، ورقم الهاتف إذا انكتب، والمرحلة، وتاريخ بداية ونهاية الاشتراك.","Your membership code, the name your teacher entered, a phone number if one was entered, your stage, and your membership start and end dates."),
+    L("رقم عشوائي للجهاز ينولد بمتصفحك، حتى يشتغل الكود على جهاز واحد. ما بيه أي معلومة عنك أو عن جهازك.","A random device number created in your browser so the code works on one device. It holds no information about you or your device."),
+    L("نتائج التمارين والاختبارات: اسم التمرين والدرجة والوقت. هاي يشوفها الأستاذ حتى يقرر المرحلة الجاية.","Exercise and test results: the exercise, the score and the time. Your teacher sees these to decide your next stage."),
+    L("بمتصفحك ينحفظ كودك ولغتك ونوع آلتك واختيار الموسيقى، حتى ما تعيد تكتبها كل مرة.","Your browser keeps your code, language, instrument and music choice so you don’t have to re-enter them.")]);
+  h+=sec(L("شنو ما نحفظ","What we don’t keep"),[
+    L("ما نسجل صوتك، وما نستخدم إعلانات، وما نتتبعك بين المواقع، وما نبيع أو نشارك أي معلومة ويه أحد.","We don’t record your sound, show ads, track you across websites, or sell or share any information.")]);
+  h+=sec(L("الاشتراك","Membership"),[
+    L("الكود شخصي، يشتغل على جهاز واحد، ومدته تبدي من أول دخول.","A code is personal, works on one device, and its period starts at the first sign-in."),
+    L("إذا بدّلت جهازك، الأستاذ يفك الكود من الجهاز القديم.","If you change devices, your teacher releases the code from the old one."),
+    L("من يخلص الاشتراك، الدروس تنقفل ونتائجك تبقى محفوظة لحد ما يتجدد.","When the membership ends, the lessons lock and your results stay saved until it is renewed."),
+    L("المراحل تنفتح حسب تقدمك وقرار الأستاذ. الأسعار والتجديد حسب الاتفاق وياه.","Stages open with your progress and your teacher’s decision. Prices and renewals are agreed with your teacher.")]);
+  h+=sec(L("حذف بياناتك","Deleting your data"),[
+    L("اطلب من أستاذك يحذف اشتراكك، وتنمسح كل بياناتك ونتائجك نهائياً.","Ask your teacher to delete your membership and all your data and results are erased permanently."),
+    L("حتى تمسح اللي محفوظ بمتصفحك، اضغط «خروج» بصفحة مسيرتي أو امسح بيانات الموقع من المتصفح.","To clear what your browser keeps, press “Sign out” on My course or clear the site data in your browser.")]);
+  h+=sec(L("المحتوى","Content"),[
+    L("الدروس والمقطوعات التعليمية والتصاميم ملك أتيليه الكلارينيت، ومخصصة للاستخدام الشخصي للمشترك. لا تنسخها ولا تنشرها.","Lessons, study pieces and designs belong to Clarinet Atelier and are for the member’s personal use. Please don’t copy or republish them."),
+    L("الألحان التراثية والكلاسيكية القديمة ملك عام.","Traditional and old classical tunes are in the public domain.")]);
+  return h+'<p class="small">'+L("آخر تحديث: تشرين الثاني ٢٠٢٦","Last updated: November 2026")+'</p></div>';
+}
+function addFootLinks(){ var f=document.getElementById("foot"); if(f&&!document.getElementById("foot-legal")) f.insertAdjacentHTML("beforeend",'<br><a id="foot-legal" href="#privacy">'+L("الخصوصية وشروط الاستخدام","Privacy & terms of use")+'</a>'); }
 
 function pageHead(id,title,lead){
   var i=idx(id);
@@ -1869,10 +1901,10 @@ requestAnimationFrame(stTick);
 
 function render(){
   stopChrom(); stopMaqam(); hidePop(); stopAnPlay(); stopEx(); stopTools(); testStop();
-  var cur=route(); renderChrome(cur); document.body.classList.toggle("home",cur==="start");
+  var cur=route(); renderChrome(cur); addFootLinks(); document.body.classList.toggle("home",cur==="start");
   if(gate==="ok"&&cur==="maqamat") curMaqam=firstOpenMq(curMaqam); if(cur==="practice") EX.mq=firstOpenMq(EX.mq);
-  var gate=IS_STUDIO&&ACC.mode!=="owner"?"login":(cur==="course"?"course":(cur==="admin"?(canSee("admin")?"admin":"lock"):(canSee(cur)?"ok":"lock")));
-  var v=gate==="login"?vOwnerLogin():gate==="course"?vCourse():gate==="admin"?vAdmin():gate==="lock"?vLocked(cur):{start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur]();
+  var gate=IS_STUDIO&&ACC.mode!=="owner"?"login":(cur==="privacy"?"privacy":cur==="course"?"course":(cur==="admin"?(canSee("admin")?"admin":"lock"):(canSee(cur)?"ok":"lock")));
+  var v=gate==="login"?vOwnerLogin():gate==="privacy"?vPrivacy():gate==="course"?vCourse():gate==="admin"?vAdmin():gate==="lock"?vLocked(cur):{start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur]();
   document.getElementById("view").innerHTML=v;
   if(gate==="ok"&&cur==="start"){ stLoad(); stScroll(); musInit(); musBtn(); document.getElementById("st-snd").onclick=musToggle; }
   else { var tb=document.querySelector(".topbar"); if(tb) tb.classList.remove("solid"); }
