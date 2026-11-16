@@ -1399,7 +1399,7 @@ var PIECES=[];
 /* every maqam: its real pieces first, then the six technical drills */
 function exItems(mq){
   var ps=PIECES.filter(function(p){return p.mq===mq.id;}).map(function(p){ return {id:p.id,piece:p,bpm:p.bpm,t:p.t,
-    d:[p.frm[0]+". مكتوبة على القرار الشائع للمقام حتى تطابق صفحة المقامات.", p.frm[1]+". Written on the maqam’s usual tonic so it matches the maqam page."]}; });
+    d:[p.frm[0]+". مكتوب على القرار الشائع للمقام حتى تطابق صفحة المقامات.", p.frm[1]+". Written on the maqam’s usual tonic so it matches the maqam page."]}; });
   return ps.concat(exList(mq));
 }
 var EX={conc:false,mq:"bayati",ton:null,i:0,bpm:null,t0:0,raf:0,notes:null,cur:-1,mode:null,hit:0};
