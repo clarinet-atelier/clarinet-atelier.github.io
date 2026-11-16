@@ -1021,6 +1021,14 @@ function admSuggest(s){
   if(best>=0) return {st:s.stage,why:L("أعلى درجة "+num(best)+"، يحتاج ٨٠","Best score "+best+", needs 80")};
   return {st:s.stage,why:L("بعده ما سوّى الاختبار","Hasn’t taken the test yet")};
 }
+function itemName(it){
+  var k=it.split(":"), id=k.slice(1).join(":"), f=function(a){ var x=a.filter(function(y){return y.id===id;})[0]; return x?L(x.t[0],x.t[1]):id; };
+  if(k[0]==="test") return L("اختبار المرحلة ","Stage test ")+num(+id.replace("stage",""));
+  if(k[0]==="lesson") return f(LESSONS);
+  if(k[0]==="piece") return f(PIECES);
+  if(k[0]==="ex"){ var q=MAQAM.filter(function(m){return m.id===k[1];})[0]; return L("تمرين ","Drill ")+(q?L(q.n[0],q.n[1]):k[1])+" "+num(+k[2]+1); }
+  return it;
+}
 function fmtD(d){ if(!d) return "—"; var x=new Date(d); return x.toLocaleDateString(lang==="ar"?"ar-IQ":"en-GB",{day:"numeric",month:"short",year:"numeric"}); }
 function renderAdmList(){
   var box=document.getElementById("adm-list"); if(!box) return; var q=ADM.q.trim().toLowerCase();
@@ -1031,7 +1039,7 @@ function renderAdmList(){
     var status=!s.device_id&&!s.expires_at?'<span class="tag">'+L("بعده ما فعّله","Not used yet")+'</span>':(act?'<span class="tag cer">'+L("فعّال لحد ","Active until ")+fmtD(s.expires_at)+'</span>':'<span class="tag rose">'+L("منتهي ","Ended ")+fmtD(s.expires_at)+'</span>');
     var h='<div class="panel adm-sub"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>'+s.name+'</b> <span class="ltr code">'+s.code+'</span>'+(s.phone?' <span class="small ltr">'+s.phone+'</span>':'')+'</div><div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag">'+L("المرحلة ","Stage ")+num(s.stage)+'</span>'+status+'</div></div>';
     h+='<div class="small" style="margin-top:6px">'+L("الاقتراح: ","Suggestion: ")+'<b>'+L("المرحلة ","stage ")+num(sg.st)+'</b> · '+sg.why+(s.note?' · '+s.note:'')+'</div>';
-    if(rs.length) h+='<div class="adm-res">'+rs.slice(0,8).map(function(r){ return '<span class="'+(+r.score>=80?'ok':'rose')+'">'+r.item.replace("test:stage",L("اختبار ","test "))+' · '+num(Math.round(+r.score))+'</span>'; }).join("")+'</div>';
+    if(rs.length) h+='<div class="adm-res">'+rs.slice(0,8).map(function(r){ return '<span class="'+(+r.score>=80?'ok':'rose')+'">'+itemName(r.item)+' · '+num(Math.round(+r.score))+'</span>'; }).join("")+'</div>';
     h+='<div class="adm-act"><select data-rs="'+s.id+'">'+STAGES.map(function(x){return'<option value="'+x.n+'"'+(x.n===sg.st?' selected':'')+'>'+L("المرحلة ","Stage ")+num(x.n)+'</option>';}).join("")+'</select><button class="btn" type="button" data-renew="'+s.id+'">'+L("جدّد ٣٠ يوم","Renew 30 days")+'</button><button class="btn sec" type="button" data-copy="'+s.code+'">'+L("انسخ الكود","Copy code")+'</button>'+(s.device_id?'<button class="btn sec" type="button" data-reset="'+s.id+'">'+L("فك الجهاز","Release device")+'</button>':'')+'<button class="btn sec danger" type="button" data-del="'+s.id+'" data-name="'+s.name.replace(/"/g,"&quot;")+'">'+L("حذف","Delete")+'</button></div></div>';
     return h; }).join("");
 }
