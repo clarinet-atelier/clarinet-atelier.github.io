@@ -793,18 +793,18 @@ function photoSVG(id){
       '<g class="k-on"><circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.6" filter="url(#'+pid+'gl)"/><circle cx="'+(c[0]-r*0.3)+'" cy="'+(c[1]-r*0.35)+'" r="'+(r*0.32)+'" fill="#fff" opacity=".45"/></g></g>'; };
   ORDER.forEach(function(k){ if(k!=="R"&&k!=="T") g+=mk(k); });
   /* back view beside the upper joint */
-  var bx=470, by=330, bw=72, bh=300, s=bw/145; /* cut canvas is 145 x 600 */
+  var bx=478, by=300, bw=112, bh=Math.round(112*600/145), s=bw/145; /* cut canvas is 145 x 600 */
   g+='<text x="'+(bx+bw/2)+'" y="'+(by-10)+'" text-anchor="middle" font-size="15" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+L("ظهر الآلة","Back")+'</text>';
   g+='<image class="bk-img" href="'+(BACK_CUT||"")+'" x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" style="opacity:'+(BACK_CUT?1:0)+';transition:opacity .4s" filter="url(#'+pid+'sh)"/>';
-  [["R",bx+s*75,by+s*410,9],["T",bx+s*63,by+s*543,12]].forEach(function(b){ g+='<g data-k="'+b[0]+'" class="k"><title>'+esc(kn(b[0]))+'</title><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+(b[3]+3)+'" fill="transparent"/><g class="k-on"><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+b[3]+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.8" filter="url(#'+pid+'gl)"/></g></g>'; });
+  [["R",bx+s*80,by+s*407,10],["T",bx+s*71,by+s*543,15]].forEach(function(b){ g+='<g data-k="'+b[0]+'" class="k"><title>'+esc(kn(b[0]))+'</title><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+(b[3]+3)+'" fill="transparent"/><g class="k-on"><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+b[3]+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.8" filter="url(#'+pid+'gl)"/></g></g>'; });
   g+='<text x="'+(bx+bw/2)+'" y="'+(by+bh+20)+'" text-anchor="middle" font-size="11" fill="#b3a492" font-family="IBM Plex Sans Arabic, sans-serif">'+L("الريجستر والإبهام","Register & thumb")+'</text>';
   var lab=function(y,t){ return '<text x="'+(bx+bw/2)+'" y="'+y+'" text-anchor="middle" font-size="14" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+t+'</text>'; };
-  g+=lab(sys==="boehm"?720:690,L("اليد اليسرى ↑","↑ Left hand"))+lab(sys==="boehm"?760:730,L("اليد اليمنى ↓","↓ Right hand"));
+  g+=lab(by+bh+62,L("↑ اليد اليسرى","↑ Left hand"))+lab(by+bh+92,L("↓ اليد اليمنى","↓ Right hand"));
   setTimeout(backCut,0);
   return g;
 }
 function diagramHTML(id){
-  return '<div class="diagram photo"><svg id="'+id+'" viewBox="300 40 260 1310" role="img" aria-label="'+L("صورة الكلارينيت ومواضع الأصابع","Clarinet photo with finger positions")+'">'+photoSVG(id)+'</svg><div class="legend"><span><i style="background:#f3a83a;box-shadow:0 0 6px #f3a83a"></i>'+L("سدّ أو اضغط","Cover / press")+'</span><span><i style="background:#f3a83a;opacity:.5;border:1.5px dashed #fff"></i>'+L("نص ضغطة","Half")+'</span></div></div>';
+  return '<div class="diagram photo"><svg id="'+id+'" viewBox="300 40 300 1310" role="img" aria-label="'+L("صورة الكلارينيت ومواضع الأصابع","Clarinet photo with finger positions")+'">'+photoSVG(id)+'</svg><div class="legend"><span><i style="background:#f3a83a;box-shadow:0 0 6px #f3a83a"></i>'+L("سدّ أو اضغط","Cover / press")+'</span><span><i style="background:#f3a83a;opacity:.5;border:1.5px dashed #fff"></i>'+L("نص ضغطة","Half")+'</span></div></div>';
 }
 function setFingers(svgId,list){ var el=document.getElementById(svgId); if(!el) return; var on={},hf={}; (list||[]).forEach(function(k){ if(/~$/.test(k)){ k=k.slice(0,-1); hf[k]=1; } on[k]=1; }); el.querySelectorAll(".k").forEach(function(k){ var id=k.getAttribute("data-k"); k.classList.toggle("on",!!on[id]); k.classList.toggle("half",!!hf[id]); }); }
 function describeKeys(list){
