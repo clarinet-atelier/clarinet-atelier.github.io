@@ -763,31 +763,47 @@ var PHOTO_KEYS={
   R1:[384,715,10],RBb:[400,805,6],RB:[400,805,6],R2:[381,778,11],R3:[381,837,11],
   RGs:[355,872,7],RFs:[352,881,7],RE:[350,895,7],RF:[352,890,7]}
 };
-var BACK_IMG="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Clarinet_register_key.jpg/1280px-Clarinet_register_key.jpg";
+var PHOTO_CUT={boehm:{src:"img/clarinet-bb-cut.webp",x:319,y:55,w:147,h:1275},albert:{src:"img/clarinet-g-cut.webp",x:328,y:55,w:115,h:1263}};
+var BACK_IMG="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Clarinet_register_key.jpg/1280px-Clarinet_register_key.jpg", BACK_CUT=null, BACK_BUSY=false;
+/* back view: real photo, cropped, turned upright and its blue felt background removed in the browser */
+function backCut(){
+  if(BACK_CUT||BACK_BUSY) return; BACK_BUSY=true;
+  var im=new Image(); im.crossOrigin="anonymous";
+  im.onload=function(){ try{
+    var sx=80,sy=95,sw=1200,sh=290, k=0.5, cw=Math.round(sh*k), ch=Math.round(sw*k), c=document.createElement("canvas"); c.width=cw; c.height=ch;
+    var x=c.getContext("2d"); x.translate(cw,0); x.rotate(Math.PI/2); x.drawImage(im,sx,sy,sw,sh,0,0,sw*k,sh*k);
+    var d=x.getImageData(0,0,cw,ch), a=d.data;
+    for(var i=0;i<a.length;i+=4){ var r=a[i],g=a[i+1],b=a[i+2], blue=b-Math.max(r,g);
+      if(blue>18) a[i+3]=0; else if(blue>6) a[i+3]=Math.round(255*(18-blue)/12); }
+    x.putImageData(d,0,0); BACK_CUT=c.toDataURL("image/png");
+    document.querySelectorAll("image.bk-img").forEach(function(e){ e.setAttribute("href",BACK_CUT); e.style.opacity=1; });
+  }catch(e){} };
+  im.src=BACK_IMG;
+}
 function photoSVG(id){
-  var sys=INST[inst].system, P=PHOTO_KEYS[sys], pid=id+"-";
+  var sys=INST[inst].system, P=PHOTO_KEYS[sys], C=PHOTO_CUT[sys], pid=id+"-";
   var g='<defs><filter id="'+pid+'gl" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
-    '<clipPath id="'+pid+'bk"><rect x="0" y="0" width="48" height="144" rx="7"/></clipPath>'+
-    '<linearGradient id="'+pid+'vg" x1="0" x2="1"><stop offset="0" stop-color="#0b0907" stop-opacity=".55"/><stop offset=".25" stop-color="#0b0907" stop-opacity="0"/><stop offset=".75" stop-color="#0b0907" stop-opacity="0"/><stop offset="1" stop-color="#0b0907" stop-opacity=".55"/></linearGradient></defs>';
-  g+='<image href="'+P.img+'" x="0" y="0" width="768" height="1376" preserveAspectRatio="none"/>';
-  g+='<rect x="290" y="330" width="210" height="730" fill="url(#'+pid+'vg)"/>';
+    '<filter id="'+pid+'sh" x="-40%" y="-5%" width="180%" height="110%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000" flood-opacity=".75"/></filter>'+
+    '<radialGradient id="'+pid+'fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>';
+  g+='<ellipse cx="'+(C.x+C.w/2)+'" cy="'+(C.y+C.h-6)+'" rx="'+(C.w*0.75)+'" ry="14" fill="url(#'+pid+'fl)"/>';
+  g+='<image href="'+C.src+'" x="'+C.x+'" y="'+C.y+'" width="'+C.w+'" height="'+C.h+'" filter="url(#'+pid+'sh)"/>';
   var mk=function(k){ var c=P[k]; if(!c) return ''; var r=c[2];
     return '<g data-k="'+k+'" class="k"><title>'+esc(kn(k))+'</title><circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+3)+'" fill="transparent"/>'+
       '<g class="k-on"><circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.6" filter="url(#'+pid+'gl)"/><circle cx="'+(c[0]-r*0.3)+'" cy="'+(c[1]-r*0.35)+'" r="'+(r*0.32)+'" fill="#fff" opacity=".45"/></g></g>'; };
   ORDER.forEach(function(k){ if(k!=="R"&&k!=="T") g+=mk(k); });
-  /* back view: real photo, rotated so the mouthpiece side is up */
-  var bx=444, by=350;
-  g+='<text x="'+(bx+24)+'" y="'+(by-6)+'" text-anchor="middle" font-size="9.5" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+L("ظهر الآلة","Back")+'</text>';
-  g+='<g transform="translate('+bx+' '+by+')"><rect x="-1.5" y="-1.5" width="51" height="147" rx="8" fill="#0d0a08" stroke="#5a4634"/><g clip-path="url(#'+pid+'bk)"><g transform="scale(0.12) translate(400 0) rotate(90) translate(-80 -60)"><image href="'+BACK_IMG+'" x="0" y="0" width="1280" height="550"/></g></g>';
-  [["R",27,98,6.5],["T",24,130,8.5]].forEach(function(b){ g+='<g data-k="'+b[0]+'" class="k"><title>'+esc(kn(b[0]))+'</title><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+(b[3]+2)+'" fill="transparent"/><g class="k-on"><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+b[3]+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.4" filter="url(#'+pid+'gl)"/></g></g>'; });
-  g+='<text x="24" y="160" text-anchor="middle" font-size="7.5" fill="#b3a492" font-family="IBM Plex Sans Arabic, sans-serif">'+L("الريجستر · الإبهام","Register · thumb")+'</text></g>';
-  var lab=function(y,a,b){ return '<text x="470" y="'+y+'" text-anchor="middle" font-size="10" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+a+'</text><text x="470" y="'+(y+13)+'" text-anchor="middle" font-size="10" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+b+'</text><path d="M470 '+(y+20)+' v40" stroke="#e9dcc9" stroke-opacity=".35"/>'; };
-  g+=lab(sys==="boehm"?540:530,L("اليد","Left"),L("اليسرى","hand"));
-  g+=lab(sys==="boehm"?770:720,L("اليد","Right"),L("اليمنى","hand"));
+  /* back view beside the upper joint */
+  var bx=470, by=330, bw=72, bh=300, s=bw/145; /* cut canvas is 145 x 600 */
+  g+='<text x="'+(bx+bw/2)+'" y="'+(by-10)+'" text-anchor="middle" font-size="15" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+L("ظهر الآلة","Back")+'</text>';
+  g+='<image class="bk-img" href="'+(BACK_CUT||"")+'" x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" style="opacity:'+(BACK_CUT?1:0)+';transition:opacity .4s" filter="url(#'+pid+'sh)"/>';
+  [["R",bx+s*75,by+s*410,9],["T",bx+s*63,by+s*543,12]].forEach(function(b){ g+='<g data-k="'+b[0]+'" class="k"><title>'+esc(kn(b[0]))+'</title><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+(b[3]+3)+'" fill="transparent"/><g class="k-on"><circle cx="'+b[1]+'" cy="'+b[2]+'" r="'+b[3]+'" fill="#f3a83a" fill-opacity=".62" stroke="#ffe0a3" stroke-width="1.8" filter="url(#'+pid+'gl)"/></g></g>'; });
+  g+='<text x="'+(bx+bw/2)+'" y="'+(by+bh+20)+'" text-anchor="middle" font-size="11" fill="#b3a492" font-family="IBM Plex Sans Arabic, sans-serif">'+L("الريجستر والإبهام","Register & thumb")+'</text>';
+  var lab=function(y,t){ return '<text x="'+(bx+bw/2)+'" y="'+y+'" text-anchor="middle" font-size="14" fill="#e9dcc9" font-family="IBM Plex Sans Arabic, sans-serif">'+t+'</text>'; };
+  g+=lab(sys==="boehm"?720:690,L("اليد اليسرى ↑","↑ Left hand"))+lab(sys==="boehm"?760:730,L("اليد اليمنى ↓","↓ Right hand"));
+  setTimeout(backCut,0);
   return g;
 }
 function diagramHTML(id){
-  return '<div class="diagram photo"><svg id="'+id+'" viewBox="290 330 210 730" role="img" aria-label="'+L("صورة الكلارينيت ومواضع الأصابع","Clarinet photo with finger positions")+'">'+photoSVG(id)+'</svg><div class="legend"><span><i style="background:#f3a83a;box-shadow:0 0 6px #f3a83a"></i>'+L("سدّ أو اضغط","Cover / press")+'</span><span><i style="background:#f3a83a;opacity:.5;border:1.5px dashed #fff"></i>'+L("نص ضغطة","Half")+'</span></div></div>';
+  return '<div class="diagram photo"><svg id="'+id+'" viewBox="300 40 260 1310" role="img" aria-label="'+L("صورة الكلارينيت ومواضع الأصابع","Clarinet photo with finger positions")+'">'+photoSVG(id)+'</svg><div class="legend"><span><i style="background:#f3a83a;box-shadow:0 0 6px #f3a83a"></i>'+L("سدّ أو اضغط","Cover / press")+'</span><span><i style="background:#f3a83a;opacity:.5;border:1.5px dashed #fff"></i>'+L("نص ضغطة","Half")+'</span></div></div>';
 }
 function setFingers(svgId,list){ var el=document.getElementById(svgId); if(!el) return; var on={},hf={}; (list||[]).forEach(function(k){ if(/~$/.test(k)){ k=k.slice(0,-1); hf[k]=1; } on[k]=1; }); el.querySelectorAll(".k").forEach(function(k){ var id=k.getAttribute("data-k"); k.classList.toggle("on",!!on[id]); k.classList.toggle("half",!!hf[id]); }); }
 function describeKeys(list){
