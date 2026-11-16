@@ -1849,7 +1849,7 @@ function render(){
   var gate=IS_STUDIO&&ACC.mode!=="owner"?"login":(cur==="course"?"course":(cur==="admin"?(canSee("admin")?"admin":"lock"):(canSee(cur)?"ok":"lock")));
   var v=gate==="login"?vOwnerLogin():gate==="course"?vCourse():gate==="admin"?vAdmin():gate==="lock"?vLocked(cur):{start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur]();
   document.getElementById("view").innerHTML=v;
-  if(cur==="start"){ stLoad(); stScroll(); document.getElementById("st-snd").onclick=musToggle; }
+  if(gate==="ok"&&cur==="start"){ stLoad(); stScroll(); document.getElementById("st-snd").onclick=musToggle; }
   else { var tb=document.querySelector(".topbar"); if(tb) tb.classList.remove("solid"); }
   if(gate==="ok"&&cur==="notes") selectNote(curNote,false);
   if(gate==="ok"&&cur==="maqamat") renderMaqam();
