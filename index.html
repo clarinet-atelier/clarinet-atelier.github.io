@@ -807,7 +807,7 @@ var ROUTES=[
  {id:"basics", t:["الأساسيات","The basics"], d:["الفم، النفَس، المسكة، العناية","Mouth, breath, posture, care"]},
  {id:"notes",  t:["النوتات والأصابع","Notes & fingerings"], d:["٣٣ نوتة ويه رسم الأصابع","33 notes with fingerings"]},
  {id:"maqamat",t:["المقامات","Maqams"], d:["٩ مقامات بالتدوين المعتمد","9 maqams, standard notation"]},
- {id:"practice",t:["مقطوعات وتمارين","Pieces & exercises"], d:["مقطوعات حقيقية لكل مقام ويه المايك","Real pieces for every maqam, with mic"]},
+ {id:"practice",t:["مقطوعات وتمارين","Pieces & exercises"], d:["مقطوعات لكل مقام ويه المايك","Pieces for every maqam, with mic"]},
  {id:"tools",t:["التيونر والمترونوم","Tuner & metronome"], d:["دوزان دقيق وإيقاعات عربية","Precise tuning, Arabic rhythms"]},
  {id:"analyzer",t:["محلل الألحان","Melody analyzer"], d:["من الصوت للنوتة للأصابع","From sound to notes to fingers"]},
  {id:"glossary",t:["القاموس","Glossary"], d:["كل مصطلح بكلام بسيط","Every term, plainly"]},
@@ -1399,7 +1399,7 @@ var PIECES=[];
 /* every maqam: its real pieces first, then the six technical drills */
 function exItems(mq){
   var ps=PIECES.filter(function(p){return p.mq===mq.id;}).map(function(p){ return {id:p.id,piece:p,bpm:p.bpm,t:p.t,
-    d:[p.frm[0]+". اعزف أول جملة منها، وهي مكتوبة على القرار الشائع للمقام حتى تطابق صفحة المقامات.", p.frm[1]+". Play its opening phrase, written on the maqam’s usual tonic so it matches the maqam page."]}; });
+    d:[p.frm[0]+". مكتوبة على القرار الشائع للمقام حتى تطابق صفحة المقامات.", p.frm[1]+". Written on the maqam’s usual tonic so it matches the maqam page."]}; });
   return ps.concat(exList(mq));
 }
 var EX={conc:false,mq:"bayati",ton:null,i:0,bpm:null,t0:0,raf:0,notes:null,cur:-1,mode:null,hit:0};
@@ -1415,7 +1415,7 @@ function exNotes(){
   return {mq:mq,ex:ex,list:out,beats:t,r:r};
 }
 function vPractice(){
-  var h=pageHead("practice",L("مقطوعات وتمارين المقامات","Maqam pieces & exercises"),L("لكل مقام مقطوعة حقيقية معروفة تتعلّم عليها، وبعدها ستة تمارين تقنية. تسمعها بصوت كلارينيت حقيقي، وتشوف الأصابع نوتة نوتة، وتعزفها ويه المايك والموقع يتابعك.","Every maqam has a real, well-known piece to learn, followed by six technical drills. Hear it on a real clarinet, follow the fingers note by note, and play along with the mic while the site follows you."));
+  var h=pageHead("practice",L("مقطوعات وتمارين المقامات","Maqam pieces & exercises"),L("لكل مقام مقطوعات تعليمية مكتوبة على سيره، وبعدها ستة تمارين تقنية. تسمعها بصوت كلارينيت حقيقي، وتشوف الأصابع نوتة نوتة، وتعزفها ويه المايك والموقع يتابعك.","Every maqam has study pieces written along its path (sayr), followed by six technical drills. Hear it on a real clarinet, follow the fingers note by note, and play along with the mic while the site follows you."));
   h+='<div class="block"><div class="maqam-pick" role="group" id="ex-mq">'+MAQAM.map(function(q){return'<button type="button" data-exmq="'+q.id+'" aria-pressed="'+(q.id===EX.mq)+'">'+L(q.n[0],q.n[1])+'</button>';}).join("")+'</div>';
   h+='<div class="ex-tabs" role="tablist" id="ex-tabs"></div>';
   h+='<div class="studio">'+diagramHTML("dg-ex")+'<div class="panel" id="ex-panel"></div></div></div>';
