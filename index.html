@@ -453,6 +453,11 @@ input[type=range]{accent-color:var(--amber)}
 .stg.now{border-color:rgba(243,168,58,.55);box-shadow:0 0 0 1px rgba(243,168,58,.25) inset}
 .stg.now .sn{background:var(--amber);color:#1b140c;border-color:var(--amber)}
 .stg.closed{opacity:.62}
+.les-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;padding-top:12px;border-top:1px solid var(--line2)}
+.les{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);font:inherit;font-size:.9rem;cursor:pointer}
+.les span{color:var(--amber)}.les.drill span{color:var(--sage)}
+.les:hover,.les.on{border-color:var(--amber)}
+.les.got{border-color:rgba(157,181,146,.55)}.les.got::after{content:"✓";color:var(--sage);margin-inline-start:2px}
 #test-area{margin-top:22px}
 .mq-lk{opacity:.45;position:relative}
 .mq-lk::after{content:"🔒";font-size:.7em;margin-inline-start:4px}
@@ -816,8 +821,8 @@ var SUPA={url:"https://vicvkswqpopbhjrcrdrf.supabase.co",key:"sb_publishable_qqL
 var ROUTE_STAGE={start:0,instrument:0,course:0,basics:1,notes:1,glossary:1,tools:1,maqamat:3,practice:3,analyzer:4,admin:9};
 var MQ_STAGE={ajam:3,nahawand:3,rast:4,bayati:4,sikah:4,hijaz:5,saba:5,kurd:5,huzam:5};
 var STAGES=[
- {n:1,t:["البداية","First steps"],d:["الأساسيات، أول خمس نوتات، التيونر والمترونوم","Basics, your first five notes, tuner & metronome"],test:[64,65,67,69,70,69,67,65,64]},
- {n:2,t:["المنطقة الواطية","The low register"],d:["نوتات الشالومو لحد أوطى نوتة بالآلة","Chalumeau notes down to the lowest note"],test:[64,62,60,59,57,55,53,52,53,55,57,59,60]},
+ {n:1,t:["البداية","First steps"],d:["الأساسيات، أول خمس نوتات (دو لحد صول)، ألحان بسيطة، التيونر والمترونوم","Basics, your first five notes (C to G), simple tunes, tuner & metronome"],test:[60,62,64,65,67,65,64,62,60,64,67,60]},
+ {n:2,t:["المنطقة الواطية","The low register"],d:["نوتات الشالومو لحد أوطى نوتة بالآلة، ويه ألحان عليها","Chalumeau notes down to the lowest note, with tunes"],test:[60,59,57,55,53,52,53,55,57,59,60,64,67,60,55]},
  {n:3,t:["المنطقة العالية · عجم ونهاوند","High register · Ajam & Nahawand"],d:["الكلاريون، وأول مقامين ويه مقطوعاتهم","The clarion register, and the first two maqams with their pieces"],test:[71,72,74,76,77,79,81,79,77,76,74,72,71]},
  {n:4,t:["أرباع التون · راست، بياتي، سيكاه","Quarter tones · Rast, Bayati, Sikah"],d:["المقامات اللي بيها أرباع، ومحلل الألحان","The quarter-tone maqams, and the melody analyzer"],test:[60,62,63.5,65,67,69,70.5,72,70.5,69,67,65,63.5,62]},
  {n:5,t:["باقي المقامات","The remaining maqams"],d:["حجاز، صبا، كرد، هزام","Hijaz, Saba, Kurd, Huzam"],test:[62,63,66,67,69,70,72,74,72,70,69,67,66,63,62]}
@@ -832,7 +837,8 @@ function supa(path,body,tok,method){
 }
 function rpc(fn,args,tok){ return supa("/rest/v1/rpc/"+fn,args||{},tok); }
 function accErr(m){ return ({bad_code:L("الكود غلط، تأكد منه.","That code isn’t valid."),other_device:L("هذا الكود مربوط بجهاز ثاني. راسلنا حتى نفكّه.","This code is linked to another device. Contact us to move it."),expired:L("اشتراكك خلص.","Your membership has ended."),bad_device:L("صار خلل بالجهاز، حدّث الصفحة.","Device error, reload the page."),"Invalid login credentials":L("الإيميل أو الباسورد غلط.","Wrong email or password.")})[m]||(L("ما گدرت أتصل، تأكد من الإنترنت. ","Couldn’t connect; check your internet. ")+'<span class="ltr small">('+m+')</span>'); }
-function setPieces(rows){ PIECES=(rows||[]).filter(function(r){return r.kind==="piece";}).map(function(r){return r.data;}); }
+var LESSONS=[];
+function setPieces(rows){ rows=rows||[]; PIECES=rows.filter(function(r){return r.kind==="piece";}).map(function(r){return r.data;}); LESSONS=rows.filter(function(r){return r.kind==="lesson";}).map(function(r){ var d=r.data; d.stage=r.stage; return d; }); }
 
 /* ---- member ---- */
 function memberLogin(code,quiet){
@@ -900,49 +906,72 @@ function vLocked(id){
   return h+'</div></div>'+pager(id);
 }
 
-/* ---- stage test (strict: every note must be heard) ---- */
-var TEST={on:false,i:0,n:0,list:null,t0:0,sc:[],st:0};
-function testList(st){ return STAGES[st-1].test.map(function(m){ return {m:m,w:spellQ(m)}; }); }
-function testPanel(st){
-  var L0=testList(st);
-  var h='<div class="studio">'+diagramHTML("dg-test")+'<div class="panel" id="test-panel"><div class="big">'+L("اختبار المرحلة ","Stage test ")+num(st)+'</div>';
-  h+='<p style="color:#d9cdbd;margin-top:6px">'+L("اعزف النوتات بالترتيب. الموقع ما يعبّر لنوتة اللي بعدها إلا من يسمع اللي قبلها صحيحة. كل ما كنت أسرع وأدق، درجتك تصير أعلى.","Play the notes in order. The site moves on only after it hears each note correctly; the quicker and steadier you are, the higher your score.")+'</p>';
-  h+='<div class="ex-seq" id="test-seq">'+L0.map(function(n,i){ return '<button type="button" class="exn'+(n.w.a%1?' q':'')+'" data-tn="'+i+'"><b>'+nmShort(n.w)+'<sub>'+num(n.w.o)+'</sub></b></button>'; }).join("")+'</div>';
-  h+='<div class="btns"><button class="btn" type="button" id="test-go">'+L("ابدي الاختبار","Start the test")+'</button><button class="btn sec" type="button" id="test-stop" disabled>'+L("إيقاف","Stop")+'</button></div><div id="test-live" class="ex-live" aria-live="polite"></div></div></div>';
+/* ---- follow engine: lessons + stage tests (listen, then play along; strict: every note must be heard) ---- */
+var FL={obj:null,mode:null,raf:0,i:0,sc:[]};
+function testObj(st){ return {key:"test:stage"+st,test:true,st:st,t:[L("اختبار المرحلة ","Stage test ")+num(st),""],d:[L("اعزف النوتات بالترتيب. الموقع ما يعبّر لنوتة اللي بعدها إلا من يسمع اللي قبلها صحيحة. كل ما كنت أسرع وأدق، درجتك تصير أعلى. تحتاج ٨٠ حتى تنجح.","Play the notes in order. The site moves on only after it hears each note correctly; the quicker and steadier you are, the higher your score. You need 80 to pass."),""],bpm:60,list:STAGES[st-1].test.map(function(m){return {m:m,b:1};})}; }
+function lesObj(d){ return {key:"lesson:"+d.id,test:false,st:d.stage,t:[L(d.t[0],d.t[1]),""],d:[L(d.d[0],d.d[1]),""],bpm:d.bpm,list:d.notes.map(function(n){return {m:n[0],b:n[1]};})}; }
+function flNotes(){ var t=0; return FL.obj.list.map(function(n){ var o={m:n.m,b:n.b,at:t}; t+=n.b; return o; }); }
+function flPanel(o){
+  var ns=o.list.filter(function(n){return n.m!==null;});
+  var h='<div class="studio">'+diagramHTML("dg-test")+'<div class="panel" id="test-panel"><div class="row" style="justify-content:space-between;gap:10px"><div class="big">'+o.t[0]+'</div><span class="tag">'+L("المرحلة ","Stage ")+num(o.st)+'</span></div>';
+  h+='<p style="color:#d9cdbd;margin-top:6px">'+o.d[0]+'</p>';
+  h+='<div class="ex-seq" id="test-seq">'+ns.map(function(n,i){ var w=spellQ(n.m); return '<button type="button" class="exn'+(w.a%1?' q':'')+(n.b>1?' long':'')+'" data-tn="'+i+'"><b>'+nmShort(w)+'<sub>'+num(w.o)+'</sub></b></button>'; }).join("")+'</div>';
+  h+='<div class="btns">'+(o.test?'':'<button class="btn sec" type="button" id="fl-listen">'+L("اسمع اللحن","Listen")+'</button>')+'<button class="btn" type="button" id="test-go">'+(o.test?L("ابدي الاختبار","Start the test"):L("اعزف ويه المايك","Play along (mic)"))+'</button><button class="btn sec" type="button" id="test-stop" disabled>'+L("إيقاف","Stop")+'</button></div><div id="test-live" class="ex-live" aria-live="polite"></div></div></div>';
   return h;
 }
-function testShow(i){
-  TEST.i=i; var n=TEST.list[i]; if(!n) return; setFingers("dg-test",fingerFor(n.m).list);
-  document.querySelectorAll("[data-tn]").forEach(function(b){ var k=+b.getAttribute("data-tn"); b.classList.toggle("now",k===i); b.classList.toggle("done",TEST.on&&k<i); });
+function flOpen(o){
+  testStop(); FL.obj=o; var a=document.getElementById("test-area"); a.innerHTML=flPanel(o); testShow(0);
+  document.getElementById("test-go").onclick=flMic; document.getElementById("test-stop").onclick=testStop;
+  var li=document.getElementById("fl-listen"); if(li) li.onclick=flListen;
+  document.querySelectorAll("[data-tn]").forEach(function(x){ x.onclick=function(){ if(!FL.mode){ var k=+x.getAttribute("data-tn"); testShow(k); playMidi(flReal()[k].m-INST[inst].t,0.8); } }; });
+  a.scrollIntoView({behavior:"smooth",block:"start"});
 }
-function testStop(){ if(TEST.on) pitchStop(); TEST.on=false; var g=document.getElementById("test-go"),s=document.getElementById("test-stop"); if(g) g.disabled=false; if(s) s.disabled=true; }
-function testStart(st){
-  testStop(); TEST.st=st; TEST.list=testList(st); TEST.sc=[]; var lv=document.getElementById("test-live");
-  document.getElementById("test-go").disabled=true; document.getElementById("test-stop").disabled=false;
-  lv.innerHTML=L("جاي أشغّل المايك…","Starting the microphone…");
+function flReal(){ return flNotes().filter(function(n){return n.m!==null;}); }
+function testShow(i){
+  FL.i=i; var n=flReal()[i]; if(!n) return; setFingers("dg-test",fingerFor(n.m).list);
+  document.querySelectorAll("[data-tn]").forEach(function(b){ var k=+b.getAttribute("data-tn"); b.classList.toggle("now",k===i); b.classList.toggle("done",FL.mode==="mic"&&k<i); });
+  var el=document.querySelector('[data-tn="'+i+'"]'), box=document.getElementById("test-seq");
+  if(el&&box){ var r1=el.getBoundingClientRect(),r2=box.getBoundingClientRect(); if(r1.bottom>r2.bottom||r1.top<r2.top) box.scrollTop+=r1.top-r2.top-10; }
+}
+function flBtns(on){ var g=document.getElementById("test-go"),s=document.getElementById("test-stop"),l=document.getElementById("fl-listen"); if(g) g.disabled=on; if(l) l.disabled=on; if(s) s.disabled=!on; }
+function testStop(){ if(FL.raf) cancelAnimationFrame(FL.raf); FL.raf=0; if(FL.mode==="mic") pitchStop(); if(FL.mode==="play") stopAllSound(); FL.mode=null; flBtns(false); }
+function flListen(){
+  testStop(); if(!ensureAudio()) return; loadSamples(); var ns=flNotes(), real=flReal(), bt=60/FL.obj.bpm, start=ac.currentTime+0.35, tot=ns.length?ns[ns.length-1].at+ns[ns.length-1].b:0;
+  FL.mode="play"; flBtns(true); metroClick(start-0.35,true,0.5);
+  ns.forEach(function(n){ if(n.m!==null) playMidi(n.m-INST[inst].t,Math.max(0.18,n.b*bt*0.94),start-ac.currentTime+n.at*bt); });
+  var last=-1, loop=function(){ if(FL.mode!=="play") return; var tt=(ac.currentTime-start)/bt, k=-1; for(var i=0;i<real.length;i++) if(tt>=real[i].at) k=i;
+    if(k!==last&&k>=0){ last=k; testShow(k); } if(tt>tot+0.3){ testStop(); return; } FL.raf=requestAnimationFrame(loop); };
+  FL.raf=requestAnimationFrame(loop);
+}
+function flMic(){
+  testStop(); var o=FL.obj, list=flReal(), lv=document.getElementById("test-live"); FL.sc=[];
+  flBtns(true); lv.innerHTML=L("جاي أشغّل المايك…","Starting the microphone…");
   pitchStart(function(err){
-    if(err){ lv.innerHTML='<span class="rose">'+err+'</span>'; testStop(); return; }
-    TEST.on=true; var i=0, hold=0, lastT=performance.now(), nt=performance.now(); testShow(0);
+    if(err){ lv.innerHTML='<span class="rose">'+err+'</span>'; flBtns(false); return; }
+    FL.mode="mic"; var i=0, hold=0, lastT=performance.now(), nt=performance.now(); testShow(0);
     PITCH.onframe=function(f){
-      if(!TEST.on) return; var now=performance.now(), dt=(now-lastT)/1000; lastT=now; var n=TEST.list[i], msg='<b>'+L("اعزف: ","Play: ")+nmLong(n.w)+'</b>';
-      if(f>0){ var wm=hz2midi(f)+INST[inst].t, dc=(wm-n.m)*100, tol=n.w.a%1?32:24;
+      if(FL.mode!=="mic") return; var now=performance.now(), dt=(now-lastT)/1000; lastT=now; var n=list[i], w=spellQ(n.m), msg='<b>'+L("اعزف: ","Play: ")+nmLong(w)+'</b>';
+      if(f>0){ var wm=hz2midi(f)+INST[inst].t, dc=(wm-n.m)*100, tol=w.a%1?32:24;
         msg+=' · '+L("تسمع: ","hearing: ")+nmLong(spellQ(wm))+' <span class="ltr">'+(dc>0?"+":"")+Math.round(dc)+'¢</span>';
         if(Math.abs(dc)<=tol){ hold+=dt; msg+=' <span class="ok">✓</span>'; } else hold=Math.max(0,hold-dt*2);
+        if(Math.abs(dc)>tol&&Math.abs(dc)<150) msg+='<br><span class="small">'+(dc>0?L("عالي شوية، رخّي الشفة","A bit sharp: relax the lip"):L("واطي شوية، شدّ الشفة أو زيد الهوا","A bit flat: firm the lip or support more air"))+'</span>';
       } else { hold=Math.max(0,hold-dt); msg+=' · '+L("ما دا أسمع صوت","no sound yet"); }
-      if(hold>=0.35){ hold=0; var took=(now-nt)/1000; nt=now; TEST.sc.push(took<=4?100:Math.max(40,100-(took-4)*5)); i++;
-        if(i>=TEST.list.length){ testStop(); var score=TEST.sc.reduce(function(a,b){return a+b;},0)/TEST.sc.length, pass=score>=80;
-          accReport("test:stage"+st,score,{per:TEST.sc.map(Math.round),inst:inst});
-          document.getElementById("test-live").innerHTML='<b class="'+(pass?'ok':'rose')+'">'+L("درجتك: ","Your score: ")+num(Math.round(score))+'/١٠٠</b><br>'+(pass?L("نجحت بالاختبار! النتيجة وصلت للأستاذ، وهو يفتحلك المرحلة الجاية ويه التجديد.","You passed! Your result has been sent to your teacher, who opens the next stage with your renewal."):L("تحتاج ٨٠ حتى تنجح. تمرّن شوية وعيد الاختبار، تگدر تعيده شگد ما تريد.","You need 80 to pass. Practise a little and try again, as often as you like."));
+      var need=Math.min(0.35,0.12+0.5*n.b*60/o.bpm*0.4);
+      if(hold>=need){ hold=0; var took=(now-nt)/1000, allow=2.5+n.b*60/o.bpm; nt=now; FL.sc.push(took<=allow?100:Math.max(40,100-(took-allow)*5)); i++;
+        if(i>=list.length){ testStop(); var score=FL.sc.reduce(function(a,b){return a+b;},0)/FL.sc.length, pass=score>=80;
+          accReport(o.key,score,{per:FL.sc.map(Math.round),inst:inst});
+          document.getElementById("test-live").innerHTML='<b class="'+(pass?'ok':'rose')+'">'+L("درجتك: ","Your score: ")+num(Math.round(score))+'/١٠٠</b><br>'+(o.test?(pass?L("نجحت بالاختبار! النتيجة وصلت للأستاذ، وهو يفتحلك المرحلة الجاية ويه التجديد.","You passed! Your result has been sent to your teacher, who opens the next stage with your renewal."):L("تحتاج ٨٠ حتى تنجح. تمرّن شوية وعيد الاختبار، تگدر تعيده شگد ما تريد.","You need 80 to pass. Practise a little and try again, as often as you like.")):(pass?L("أحسنت! عزفته كله. جرّب اللحن اللي بعده.","Well done! You played it all. Try the next one."):L("خلصته! عيده مرة ثانية وحاول تكون أسرع وأثبت.","Finished! Play it again a little quicker and steadier.")));
+          setTimeout(function(){ var c=document.querySelector('[data-les="'+o.key.replace("lesson:","")+'"]'); if(c&&pass) c.classList.add("got"); },50);
           return; }
         testShow(i); }
-      var lv3=document.getElementById("test-live"); if(lv3) lv3.innerHTML=msg+'<div class="small" style="margin-top:6px">'+L("النوتة ","Note ")+num(i+1)+L(" من "," of ")+num(TEST.list.length)+'</div>';
+      var lv3=document.getElementById("test-live"); if(lv3) lv3.innerHTML=msg+'<div class="small" style="margin-top:6px">'+L("النوتة ","Note ")+num(i+1)+L(" من "," of ")+num(list.length)+'</div>';
     };
   });
 }
 
 /* ---- my course ---- */
 function vCourse(){
-  var h=pageHead("course",L("مسيرتي","My course"),L("الدورة خمس مراحل. كل مرحلة تنفتح ويه الاشتراك الشهري، وبآخرها اختبار يسمعك بيه الموقع.","The course has five stages. Each opens with the monthly membership, and ends with a test where the site listens to you."));
+  var h=pageHead("course",L("مسيرتي","My course"),L("الدورة خمس مراحل. كل مرحلة تنفتح ويه الاشتراك الشهري، بيها ألحان وتمارين يسمعك بيها الموقع، وبآخرها اختبار.","The course has five stages. Each opens with the monthly membership, with tunes and exercises the site listens to, and ends with a test."));
   var st=ACC.mode==="owner"?5:(ACC.mode==="member"?ACC.realStage:0);
   h+='<div class="block">';
   if(ACC.mode==="visitor"){
@@ -953,10 +982,14 @@ function vCourse(){
     if(!ACC.active) h+='<p class="rose" style="margin:12px 0">'+L("اشتراكك خلص. راسلنا حتى نجدده، وتقدّمك محفوظ.","Your membership has ended. Contact us to renew; your progress is saved.")+'</p>';
     if(ACC.err) h+='<p class="rose small">'+ACC.err+'</p>';
   }
+  var got={}; ACC.results.forEach(function(r){ if(+r.score>=80) got[r.item]=1; });
   h+='<div class="stages">'+STAGES.map(function(s){
     var state=s.n<st?"done":(s.n===st?"now":"closed"), open=ACC.mode==="owner"||(ACC.mode==="member"&&ACC.active&&s.n<=st);
     var best=ACC.results.filter(function(r){return r.item==="test:stage"+s.n;}).reduce(function(a,r){return Math.max(a,+r.score);},-1);
-    return '<div class="stg '+state+'"><span class="sn">'+(state==="closed"&&!open?lockIcon(16):num(s.n))+'</span><div><b>'+L(s.t[0],s.t[1])+'</b><span class="d">'+L(s.d[0],s.d[1])+'</span>'+(best>=0?'<span class="small '+(best>=80?'ok':'rose')+'">'+L("أعلى درجة بالاختبار: ","Best test score: ")+num(best)+'</span>':'')+'</div>'+(open?'<button class="btn sec" type="button" data-stest="'+s.n+'">'+L("الاختبار","Test")+'</button>':'')+'</div>';
+    var les=open?LESSONS.filter(function(d){return d.stage===s.n;}):[];
+    var x='<div class="stg '+state+'"><span class="sn">'+(state==="closed"&&!open?lockIcon(16):num(s.n))+'</span><div><b>'+L(s.t[0],s.t[1])+'</b><span class="d">'+L(s.d[0],s.d[1])+'</span>'+(best>=0?'<span class="small '+(best>=80?'ok':'rose')+'">'+L("أعلى درجة بالاختبار: ","Best test score: ")+num(best)+'</span>':'')+'</div>'+(open?'<button class="btn sec" type="button" data-stest="'+s.n+'">'+L("الاختبار","Test")+'</button>':'');
+    if(les.length) x+='<div class="les-row">'+les.map(function(d){ return '<button type="button" class="les'+(d.type==="drill"?' drill':'')+(got["lesson:"+d.id]?' got':'')+'" data-les="'+d.id+'"><span>'+(d.type==="drill"?'◎':'♪')+'</span>'+L(d.t[0],d.t[1])+'</button>'; }).join("")+'</div>';
+    return x+'</div>';
   }).join("")+'</div>';
   h+='<div id="test-area"></div></div>';
   return h+pager("course");
@@ -964,10 +997,8 @@ function vCourse(){
 function bindCourse(){
   var f=document.getElementById("code-form"); if(f) f.onsubmit=function(e){ e.preventDefault(); memberLogin(document.getElementById("code-in").value); render(); };
   var o=document.getElementById("acc-out"); if(o) o.onclick=memberLogout;
-  document.querySelectorAll("[data-stest]").forEach(function(b){ b.onclick=function(){ testStop(); var s=+b.getAttribute("data-stest"); document.getElementById("test-area").innerHTML=testPanel(s); testShow(0);
-    document.getElementById("test-go").onclick=function(){ testStart(s); }; document.getElementById("test-stop").onclick=testStop;
-    document.querySelectorAll("[data-tn]").forEach(function(x){ x.onclick=function(){ if(!TEST.on){ var k=+x.getAttribute("data-tn"); testShow(k); playMidi(TEST.list[k].m-INST[inst].t,0.8); } }; });
-    document.getElementById("test-area").scrollIntoView({behavior:"smooth",block:"start"}); }; });
+  document.querySelectorAll("[data-stest]").forEach(function(b){ b.onclick=function(){ flOpen(testObj(+b.getAttribute("data-stest"))); }; });
+  document.querySelectorAll("[data-les]").forEach(function(b){ b.onclick=function(){ var d=LESSONS.filter(function(x){return x.id===b.getAttribute("data-les");})[0]; if(d){ document.querySelectorAll("[data-les]").forEach(function(y){y.classList.toggle("on",y===b);}); flOpen(lesObj(d)); } }; });
 }
 
 /* ---- owner: control panel ---- */
