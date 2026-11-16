@@ -426,6 +426,8 @@ input[type=range]{accent-color:var(--amber)}
 
 .st-snd{position:absolute;z-index:3;inset-inline-end:28px;bottom:28px;display:flex;align-items:center;gap:10px;padding:9px 16px 9px 12px;border-radius:999px;border:1px solid rgba(244,237,227,.22);background:rgba(13,10,7,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--ink);font-size:.85rem;cursor:pointer}
 .st-snd:hover{border-color:var(--amber)}
+.st-snd.wait{border-color:var(--amber);animation:sndp 1.6s ease-in-out infinite}
+@keyframes sndp{50%{box-shadow:0 0 0 6px rgba(243,168,58,.18)}}
 .st-snd .eq{display:flex;align-items:flex-end;gap:2px;height:14px}
 .st-snd .eq i{width:3px;height:4px;background:var(--amber);border-radius:1px}
 .st-snd[aria-pressed="true"] .eq i{animation:steq 1s ease-in-out infinite}
@@ -1109,7 +1111,7 @@ function vStart(){
   h+='<video id="st-vid" muted playsinline preload="none" aria-hidden="true"></video><div class="st-shade"></div>';
   h+='<div class="st-copy">'+STEPS.map(function(s,i){ return '<div class="st-panel'+(i?'':' on')+'">'+stPanel(s)+'</div>'; }).join("")+'</div>';
   h+='<div class="st-rail" aria-hidden="true">'+STEPS.slice(1).map(function(){return '<i><b></b></i>';}).join("")+'</div>';
-  h+='<button type="button" class="st-snd" id="st-snd" aria-pressed="'+(MUS.on?'true':'false')+'"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>'+(MUS.on?L("إيقاف الموسيقى","Music off"):L("شغّل الموسيقى","Play music"))+'</span></button>';
+  h+='<button type="button" class="st-snd" id="st-snd" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>'+L("شغّل الموسيقى","Play music")+'</span></button>';
   h+='<div class="st-load" id="st-load"'+(ST.ready?' style="display:none"':'')+'><span>'+L("تحميل","LOADING")+'</span><i><b></b></i><span id="st-lp">0%</span></div>';
   h+='</div></section>';
 h+='<div class="wrapx st-after"><div class="pillars">';
@@ -1756,39 +1758,27 @@ function renderChrome(cur){
 }
 
 /* ===== film scrub engine ===== */
-/* story music scrubbed by scroll: forward file + reversed file, speed follows scroll, pitch preserved */
-var MUS={on:false,ready:false,loading:false,f:null,r:null,gf:null,gr:null,D:41.6,last:0,prevT:0,v:0,still:0,target:0,cur:"",lt:0};
-function musMk(url){ var a=new Audio(); a.src=url; a.preload="auto"; a.loop=false; a.preservesPitch=true; a.mozPreservesPitch=true; a.webkitPreservesPitch=true; return a; }
-function musLoad(cb){
-  if(MUS.ready){ cb&&cb(); return; } if(MUS.loading) return; MUS.loading=true;
-  Promise.all(["../media/story-music.mp3","../media/story-music-rev.mp3"].map(function(u){ return fetch(u).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); }).catch(function(){ return u; }); }))
-  .then(function(us){ ensureAudio(); MUS.f=musMk(us[0]); MUS.r=musMk(us[1]);
-    try{ MUS.gf=ac.createGain(); MUS.gr=ac.createGain(); MUS.gf.gain.value=0; MUS.gr.gain.value=0;
-      ac.createMediaElementSource(MUS.f).connect(MUS.gf); ac.createMediaElementSource(MUS.r).connect(MUS.gr); MUS.gf.connect(ac.destination); MUS.gr.connect(ac.destination); }catch(e){ MUS.gf=null; }
-    MUS.f.addEventListener("loadedmetadata",function(){ MUS.D=MUS.f.duration||MUS.D; });
-    MUS.ready=true; cb&&cb(); });
+/* story music: plays straight through from the moment the site opens, fades out when the story scroll ends */
+var MUS={on:true,el:null,ok:false,target:1,vol:0,lt:0};
+try{ if(localStorage.getItem("ca_mus")==="0") MUS.on=false; }catch(e){}
+function musInit(){
+  if(MUS.el) return; var a=new Audio("../media/story-music.mp3"); a.loop=true; a.preload="auto"; a.volume=0; MUS.el=a;
+  var unlock=function(){ musPlay(); };
+  ["pointerdown","keydown","touchend","click"].forEach(function(ev){ window.addEventListener(ev,unlock,{passive:true}); });
+  MUS.unlock=function(){ ["pointerdown","keydown","touchend","click"].forEach(function(ev){ window.removeEventListener(ev,unlock); }); };
+  musPlay();
 }
-function musGain(el,g,val){ if(g){ g.gain.setTargetAtTime(val,ac.currentTime,0.06); } else { el.volume=Math.max(0,Math.min(1,val)); } }
-function musToggle(){ MUS.on=!MUS.on; musBtn(); if(MUS.on){ ensureAudio(); musLoad(function(){ /* unlock both elements inside the click */ [MUS.f,MUS.r].forEach(function(a){ var p=a.play(); if(p) p.then(function(){ a.pause(); }).catch(function(){}); }); }); } else musSilence(); }
-function musBtn(){ var b=document.getElementById("st-snd"); if(!b) return; b.setAttribute("aria-pressed",MUS.on?"true":"false"); b.lastChild.textContent=MUS.on?L("إيقاف الموسيقى","Music off"):L("شغّل الموسيقى","Play music"); }
-function musSilence(){ if(!MUS.ready) return; musGain(MUS.f,MUS.gf,0); musGain(MUS.r,MUS.gr,0); setTimeout(function(){ if(!MUS.on||MUS.cur===""){ MUS.f.pause(); MUS.r.pause(); } },260); MUS.cur=""; }
-/* called every frame with the film position in seconds (smoothed) */
-function musTick(t){
-  if(!MUS.on||!MUS.ready) return;
-  var now=performance.now(), dt=Math.min(0.1,(now-(MUS.lt||now))/1000)||0.016; MUS.lt=now;
-  var T=Math.max(0,Math.min(MUS.D-0.05,t*(MUS.D/(ST.dur||MUS.D))));
-  var vi=(T-MUS.prevT)/dt; MUS.prevT=T; MUS.v+= (vi-MUS.v)*0.18;
-  var sp=Math.abs(MUS.v), vol=0.8*MUS.target;
-  if(sp<0.06){ MUS.still+=dt; if(MUS.still>0.18&&MUS.cur!==""){ musSilence(); } return; }
-  MUS.still=0;
-  var fwd=MUS.v>0, el=fwd?MUS.f:MUS.r, other=fwd?MUS.r:MUS.f, pos=fwd?T:(MUS.D-T);
-  if(MUS.cur!==(fwd?"f":"r")){ musGain(other,fwd?MUS.gr:MUS.gf,0); setTimeout(function(){ if(MUS.cur!==(fwd?"r":"f")) other.pause(); },200);
-    try{ el.currentTime=pos; }catch(e){} MUS.cur=fwd?"f":"r"; el.play().catch(function(){}); }
-  var err=pos-el.currentTime;
-  if(Math.abs(err)>0.6){ try{ el.currentTime=pos; }catch(e){} err=0; }
-  var rate=Math.max(0.55,Math.min(2.2,sp+err*0.9)); if(Math.abs(el.playbackRate-rate)>0.02) el.playbackRate=rate;
-  if(el.paused) el.play().catch(function(){});
-  musGain(el,fwd?MUS.gf:MUS.gr,vol*Math.min(1,sp/0.25));
+function musPlay(){ if(!MUS.el||!MUS.on||MUS.target<=0.01) return; var p=MUS.el.play(); if(p&&p.then) p.then(function(){ MUS.ok=true; if(MUS.unlock) MUS.unlock(); musBtn(); }).catch(function(){ musBtn(); }); }
+function musToggle(){ MUS.on=!MUS.on; try{ localStorage.setItem("ca_mus",MUS.on?"1":"0"); }catch(e){} if(MUS.on){ musInit(); musPlay(); } musBtn(); }
+function musBtn(){ var b=document.getElementById("st-snd"); if(!b) return; var playing=MUS.on&&MUS.ok&&MUS.el&&!MUS.el.paused; b.setAttribute("aria-pressed",playing?"true":"false"); b.classList.toggle("wait",MUS.on&&!MUS.ok); b.lastChild.textContent=playing?L("إيقاف الموسيقى","Music off"):L("شغّل الموسيقى","Play music"); }
+function musSilence(){ MUS.target=0; }
+function musTick(){
+  if(!MUS.el) return; var now=performance.now(), dt=Math.min(0.1,(now-(MUS.lt||now))/1000)||0.016; MUS.lt=now;
+  var want=(MUS.on&&document.getElementById("st"))?0.75*MUS.target:0;
+  MUS.vol+=(want-MUS.vol)*Math.min(1,dt*(want>MUS.vol?1.6:2.4)); if(Math.abs(want-MUS.vol)<0.003) MUS.vol=want;
+  try{ MUS.el.volume=Math.max(0,Math.min(1,MUS.vol)); }catch(e){}
+  if(want===0&&MUS.vol<0.01&&!MUS.el.paused){ MUS.el.pause(); musBtn(); }
+  else if(want>0&&MUS.el.paused&&MUS.ok){ MUS.el.play().catch(function(){}); musBtn(); }
 }
 
 var ST={url:null,ready:false,loading:false,dur:41.6,target:0,cur:0,last:-1};
@@ -1823,7 +1813,7 @@ function stProgress(){
 function stClamp(x){ return Math.min(1,Math.max(0,x)); }
 function stScroll(){
   var top=document.querySelector(".topbar"), sec=document.getElementById("st");
-  if(!sec){ if(top) top.classList.remove("solid"); MUS.target=0; musSilence(); return; }
+  if(!sec){ if(top) top.classList.remove("solid"); musSilence(); return; }
   var p=stProgress(), tm=p*(ST.dur-0.05), k=0;
   ST.target=tm;
   STEPS.forEach(function(s,i){ if(tm>=s.at[0]) k=i; });
@@ -1833,11 +1823,11 @@ function stScroll(){
   var br=STEPS[3], hz=document.getElementById("ro-hz");
   if(hz) hz.textContent=Math.round(stClamp((tm-br.at[0])/4.5)*440)+" Hz";
   if(top) top.classList.toggle("solid",window.scrollY>sec.offsetHeight-window.innerHeight*1.1);
-  var past=(window.scrollY-(sec.offsetHeight-window.innerHeight))/window.innerHeight; MUS.target=0.75*Math.max(0,Math.min(1,1-past));
+  var past=(window.scrollY-(sec.offsetHeight-window.innerHeight*1.6))/(window.innerHeight*0.6); MUS.target=Math.max(0,Math.min(1,1-past)); if(MUS.target>0.01&&MUS.el&&MUS.el.paused&&MUS.ok) musPlay();
 }
 function stTick(){
   ST.cur+=(ST.target-ST.cur)*(stReduce?1:0.14);
-  musTick(ST.cur);
+  musTick();
   var v=document.getElementById("st-vid");
   if(v&&ST.ready&&v.readyState>=1&&Math.abs(v.currentTime-ST.cur)>0.03&&!v.seeking){ try{ v.currentTime=ST.cur; }catch(e){} }
   requestAnimationFrame(stTick);
@@ -1853,7 +1843,7 @@ function render(){
   var gate=IS_STUDIO&&ACC.mode!=="owner"?"login":(cur==="course"?"course":(cur==="admin"?(canSee("admin")?"admin":"lock"):(canSee(cur)?"ok":"lock")));
   var v=gate==="login"?vOwnerLogin():gate==="course"?vCourse():gate==="admin"?vAdmin():gate==="lock"?vLocked(cur):{start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur]();
   document.getElementById("view").innerHTML=v;
-  if(gate==="ok"&&cur==="start"){ stLoad(); stScroll(); document.getElementById("st-snd").onclick=musToggle; }
+  if(gate==="ok"&&cur==="start"){ stLoad(); stScroll(); musInit(); musBtn(); document.getElementById("st-snd").onclick=musToggle; }
   else { var tb=document.querySelector(".topbar"); if(tb) tb.classList.remove("solid"); }
   if(gate==="ok"&&cur==="notes") selectNote(curNote,false);
   if(gate==="ok"&&cur==="maqamat") renderMaqam();
