@@ -437,8 +437,31 @@ input[type=range]{accent-color:var(--amber)}
 .locked .lk-ic{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;color:var(--amber);border:1px solid rgba(243,168,58,.4);background:rgba(243,168,58,.08)}
 .locked h2{font-size:1.7rem;margin:6px 0 10px}
 .locked p{color:#d9cdbd;margin:0 auto 12px;max-width:46ch}
-.lk-code{display:flex;gap:8px;justify-content:center;margin:18px 0 10px}
-.lk-code input{min-width:220px;padding:10px 14px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);text-align:center;letter-spacing:.12em}
+.lk-code,.own-form{display:flex;gap:8px;justify-content:center;margin:18px 0 6px;flex-wrap:wrap}
+.own-form{flex-direction:column;max-width:320px;margin-inline:auto}
+.lk-code input,.own-form input,.adm-form input,.adm-form select,.adm-act select,#adm-q{min-width:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);font:inherit}
+.lk-code input{width:230px;text-align:center;letter-spacing:.12em;direction:ltr;text-transform:uppercase}
+.acc-card{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.acc-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stages{display:grid;gap:10px;margin-top:20px}
+.stg{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;border:1px solid var(--line2);background:var(--panel)}
+.stg .sn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;border:1px solid var(--line2);color:var(--muted)}
+.stg b{display:block}.stg .d{display:block;color:var(--muted);font-size:.9rem}
+.stg.done .sn{background:rgba(143,170,140,.18);color:var(--sage);border-color:rgba(143,170,140,.5)}
+.stg.now{border-color:rgba(243,168,58,.55);box-shadow:0 0 0 1px rgba(243,168,58,.25) inset}
+.stg.now .sn{background:var(--amber);color:#1b140c;border-color:var(--amber)}
+.stg.locked{opacity:.62}
+#test-area{margin-top:22px}
+.mq-lk{opacity:.45;position:relative}
+.mq-lk::after{content:"🔒";font-size:.7em;margin-inline-start:4px}
+.shake{animation:shk .4s}
+@keyframes shk{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.adm-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:12px}
+.adm-sub{margin-bottom:10px;padding:16px 18px}
+.adm-res{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:.85rem}
+.adm-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--amber)}
+.big-code{font-size:1.25rem}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -777,23 +800,242 @@ var ROUTES=[
  {id:"practice",t:["مقطوعات وتمارين","Pieces & exercises"], d:["مقطوعات حقيقية لكل مقام ويه المايك","Real pieces for every maqam, with mic"]},
  {id:"tools",t:["التيونر والمترونوم","Tuner & metronome"], d:["دوزان دقيق وإيقاعات عربية","Precise tuning, Arabic rhythms"]},
  {id:"analyzer",t:["محلل الألحان","Melody analyzer"], d:["من الصوت للنوتة للأصابع","From sound to notes to fingers"]},
- {id:"glossary",t:["القاموس","Glossary"], d:["كل مصطلح بكلام بسيط","Every term, plainly"]}
+ {id:"glossary",t:["القاموس","Glossary"], d:["كل مصطلح بكلام بسيط","Every term, plainly"]},
+ {id:"course",t:["مسيرتي","My course"], d:["مراحلك، اختباراتك، اشتراكك","Your stages, tests and membership"]}
 ];
 function route(){ var h=(location.hash||"").replace("#",""); return ROUTES.some(function(r){return r.id===h;})?h:"start"; }
 function idx(id){ for(var i=0;i<ROUTES.length;i++) if(ROUTES[i].id===id) return i; return 0; }
+var IS_STUDIO=false;
 
-var FREE_ROUTES={start:1,instrument:1};
-function vLocked(id){
-  var r=ROUTES.filter(function(x){return x.id===id;})[0]||{t:["",""],d:["",""]};
-  var h=pageHead(id,L(r.t[0],r.t[1]),L(r.d[0],r.d[1]));
-  h+='<div class="block"><div class="panel locked"><div class="lk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>';
-  h+='<h2>'+L("هذا الدرس للمشتركين","This lesson is for members")+'</h2>';
-  h+='<p>'+L("الاشتراك يفتحلك الدروس مرحلة مرحلة، ويه تمارين ومقطوعات حقيقية، والموقع يسمعك ويقيّمك نوتة نوتة.","Membership unlocks the course stage by stage, with real pieces and exercises, while the site listens and checks you note by note.")+'</p>';
-  h+='<div class="lk-code"><input type="text" disabled placeholder="'+L("كود الاشتراك","Membership code")+'"><button class="btn" type="button" disabled>'+L("دخول","Enter")+'</button></div>';
-  h+='<p class="small">'+L("الاشتراكات تنفتح قريباً. لحد ذاك جرّب الدرس المجاني.","Memberships open soon. Meanwhile, try the free lesson.")+'</p>';
-  h+='<div class="btns" style="justify-content:center"><a class="btn sec" href="#instrument">'+L("الدرس المجاني","Free lesson")+'</a></div></div></div>';
-  return h+pager(id);
+/* ================= access: visitor / member / owner ================= */
+var SUPA={url:"https://vicvkswqpopbhjrcrdrf.supabase.co",key:"sb_publishable_qqLiBeKQRc7GSIEY7ncU_Q_DRQVM7jy"};
+var ROUTE_STAGE={start:0,instrument:0,course:0,basics:1,notes:1,glossary:1,tools:1,maqamat:3,practice:3,analyzer:4,admin:9};
+var MQ_STAGE={ajam:3,nahawand:3,rast:4,bayati:4,sikah:4,hijaz:5,saba:5,kurd:5,huzam:5};
+var STAGES=[
+ {n:1,t:["البداية","First steps"],d:["الأساسيات، أول خمس نوتات، التيونر والمترونوم","Basics, your first five notes, tuner & metronome"],test:[64,65,67,69,70,69,67,65,64]},
+ {n:2,t:["المنطقة الواطية","The low register"],d:["نوتات الشالومو لحد أوطى نوتة بالآلة","Chalumeau notes down to the lowest note"],test:[64,62,60,59,57,55,53,52,53,55,57,59,60]},
+ {n:3,t:["المنطقة العالية · عجم ونهاوند","High register · Ajam & Nahawand"],d:["الكلاريون، وأول مقامين ويه مقطوعاتهم","The clarion register, and the first two maqams with their pieces"],test:[71,72,74,76,77,79,81,79,77,76,74,72,71]},
+ {n:4,t:["أرباع التون · راست، بياتي، سيكاه","Quarter tones · Rast, Bayati, Sikah"],d:["المقامات اللي بيها أرباع، ومحلل الألحان","The quarter-tone maqams, and the melody analyzer"],test:[60,62,63.5,65,67,69,70.5,72,70.5,69,67,65,63.5,62]},
+ {n:5,t:["باقي المقامات","The remaining maqams"],d:["حجاز، صبا، كرد، هزام","Hijaz, Saba, Kurd, Huzam"],test:[62,63,66,67,69,70,72,74,72,70,69,67,66,63,62]}
+];
+var ACC={mode:IS_STUDIO?"owner_out":"visitor",stage:0,name:"",days:0,active:false,exp:null,err:"",busy:false,results:[],tok:null};
+function accDev(){ var d=null; try{ d=localStorage.getItem("ca_dev"); }catch(e){} if(!d){ var a=new Uint8Array(16); (window.crypto||window.msCrypto).getRandomValues(a); d=Array.prototype.map.call(a,function(x){return("0"+x.toString(16)).slice(-2);}).join(""); try{ localStorage.setItem("ca_dev",d); }catch(e){} } return d; }
+function accCode(v){ try{ if(v===undefined) return localStorage.getItem("ca_code")||""; if(v) localStorage.setItem("ca_code",v); else localStorage.removeItem("ca_code"); }catch(e){} return v; }
+function supa(path,body,tok,method){
+  var h={"apikey":SUPA.key,"Content-Type":"application/json"}; if(tok) h.Authorization="Bearer "+tok;
+  return fetch(SUPA.url+path,{method:method||(body?"POST":"GET"),headers:h,body:body?JSON.stringify(body):undefined}).then(function(r){
+    return r.text().then(function(t){ var j=null; try{ j=t?JSON.parse(t):null; }catch(e){} if(!r.ok){ var m=(j&&(j.message||j.error_description||j.msg))||("HTTP "+r.status); throw new Error(m); } return j; }); });
 }
+function rpc(fn,args,tok){ return supa("/rest/v1/rpc/"+fn,args||{},tok); }
+function accErr(m){ return ({bad_code:L("الكود غلط، تأكد منه.","That code isn’t valid."),other_device:L("هذا الكود مربوط بجهاز ثاني. راسلنا حتى نفكّه.","This code is linked to another device. Contact us to move it."),expired:L("اشتراكك خلص.","Your membership has ended."),bad_device:L("صار خلل بالجهاز، حدّث الصفحة.","Device error, reload the page."),"Invalid login credentials":L("الإيميل أو الباسورد غلط.","Wrong email or password.")})[m]||(L("ما گدرت أتصل، تأكد من الإنترنت. ","Couldn’t connect; check your internet. ")+'<span class="ltr small">('+m+')</span>'); }
+function setPieces(rows){ PIECES=(rows||[]).filter(function(r){return r.kind==="piece";}).map(function(r){return r.data;}); }
+
+/* ---- member ---- */
+function memberLogin(code,quiet){
+  code=(code||"").trim(); if(!code) return Promise.resolve();
+  ACC.busy=true; ACC.err="";
+  return rpc("member_login",{p_code:code,p_device:accDev()}).then(function(s){
+    accCode(code); ACC.mode="member"; ACC.name=s.name; ACC.days=s.days_left; ACC.active=s.active; ACC.exp=s.expires_at; ACC.stage=s.active?s.stage:0; ACC.realStage=s.stage;
+    if(!s.active){ setPieces([]); return; }
+    return rpc("member_content",{p_code:code,p_device:accDev()}).then(setPieces).then(function(){ return rpc("member_results",{p_code:code,p_device:accDev()}); }).then(function(r){ ACC.results=r||[]; });
+  }).catch(function(e){ ACC.err=accErr(e.message); if(e.message==="bad_code"||e.message==="other_device"){ accCode(""); ACC.mode="visitor"; ACC.stage=0; } })
+    .then(function(){ ACC.busy=false; if(!quiet||ACC.mode==="member") render(); });
+}
+function memberLogout(){ accCode(""); ACC={mode:"visitor",stage:0,name:"",days:0,active:false,exp:null,err:"",busy:false,results:[]}; setPieces([]); location.hash="#course"; render(); }
+function accReport(item,score,details){
+  if(ACC.mode!=="member"||!ACC.active) return;
+  rpc("member_result",{p_code:accCode(),p_device:accDev(),p_item:item,p_score:Math.round(score),p_details:details||null}).then(function(){ ACC.results.unshift({item:item,score:Math.round(score),stage:ACC.stage,at:new Date().toISOString()}); }).catch(function(){});
+}
+
+/* ---- owner ---- */
+function ownerTok(){ var t=null; try{ t=JSON.parse(localStorage.getItem("ca_owner")||"null"); }catch(e){} return t; }
+function ownerSave(t){ try{ if(t) localStorage.setItem("ca_owner",JSON.stringify({a:t.access_token,r:t.refresh_token,x:Date.now()+(t.expires_in-60)*1000})); else localStorage.removeItem("ca_owner"); }catch(e){} }
+function ownerFresh(){
+  var t=ownerTok(); if(!t) return Promise.reject(new Error("no_session"));
+  if(Date.now()<t.x) return Promise.resolve(t.a);
+  return supa("/auth/v1/token?grant_type=refresh_token",{refresh_token:t.r}).then(function(n){ ownerSave(n); return n.access_token; });
+}
+function ownerStart(){
+  ACC.busy=true;
+  return ownerFresh().then(function(tok){ ACC.tok=tok; return rpc("is_admin",{},tok); }).then(function(ok){
+    if(!ok){ ownerSave(null); ACC.mode="owner_out"; ACC.err=L("هذا الحساب مو أدمن.","This account is not an admin."); return; }
+    ACC.mode="owner"; ACC.stage=9; return supa("/rest/v1/content?select=key,kind,stage,data&order=stage,sort",null,ACC.tok).then(setPieces);
+  }).catch(function(e){ if(e.message!=="no_session"){ ownerSave(null); ACC.err=accErr(e.message); } ACC.mode="owner_out"; })
+    .then(function(){ ACC.busy=false; render(); });
+}
+function ownerLogin(email,pass){
+  ACC.busy=true; ACC.err=""; render();
+  return supa("/auth/v1/token?grant_type=password",{email:email,password:pass}).then(function(t){ ownerSave(t); return ownerStart(); })
+    .catch(function(e){ ACC.busy=false; ACC.err=accErr(e.message); render(); });
+}
+function ownerLogout(){ ownerSave(null); ACC.mode="owner_out"; ACC.stage=0; setPieces([]); render(); }
+function adm(path,body,method){ return ownerFresh().then(function(tok){ ACC.tok=tok; return supa(path,body,tok,method); }); }
+
+/* ---- gating ---- */
+function canSee(id){ var s=ROUTE_STAGE[id]; if(s===undefined) s=1; if(ACC.mode==="owner") return true; if(id==="admin") return false; return s<=ACC.stage; }
+function mqOpen(id){ return ACC.mode==="owner"||(MQ_STAGE[id]||5)<=ACC.stage; }
+function stageOf(id){ return ROUTE_STAGE[id]===undefined?1:ROUTE_STAGE[id]; }
+function lockIcon(sz){ return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'; }
+function codeForm(){
+  return '<form class="lk-code" id="code-form"><input type="text" id="code-in" autocomplete="off" spellcheck="false" placeholder="CA-XXXX-XXXX" value="'+(ACC.mode==="visitor"?"":accCode())+'" aria-label="'+L("كود الاشتراك","Membership code")+'"><button class="btn" type="submit"'+(ACC.busy?' disabled':'')+'>'+(ACC.busy?L("لحظة…","One moment…"):L("دخول","Enter"))+'</button></form>'+(ACC.err?'<p class="rose small" style="margin-top:6px">'+ACC.err+'</p>':'');
+}
+function vLocked(id){
+  var r=ROUTES.filter(function(x){return x.id===id;})[0]||{t:["",""],d:["",""]}, need=stageOf(id);
+  var h=pageHead(id,L(r.t[0],r.t[1]),L(r.d[0],r.d[1]));
+  h+='<div class="block"><div class="panel locked"><div class="lk-ic">'+lockIcon(34)+'</div>';
+  if(ACC.mode==="member"&&!ACC.active){
+    h+='<h2>'+L("اشتراكك خلص","Your membership has ended")+'</h2><p>'+L("راسلنا حتى نجدده. تقدّمك ونتائجك محفوظة.","Contact us to renew. Your progress and results are saved.")+'</p>';
+  } else if(ACC.mode==="member"){
+    h+='<h2>'+L("ينفتح بالمرحلة ","Opens at stage ")+num(need)+'</h2><p>'+L("كمّل مرحلتك الحالية ونجح باختبارها، وبعدها ينفتحلك هذا الدرس.","Finish your current stage and pass its test, and this lesson opens.")+'</p>';
+    h+='<div class="btns" style="justify-content:center"><a class="btn" href="#course">'+L("مسيرتي","My course")+'</a></div>';
+  } else {
+    h+='<h2>'+L("هذا الدرس للمشتركين","This lesson is for members")+'</h2>';
+    h+='<p>'+L("الاشتراك يفتحلك الدروس مرحلة مرحلة، ويه تمارين ومقطوعات حقيقية، والموقع يسمعك ويقيّمك نوتة نوتة.","Membership unlocks the course stage by stage, with real pieces and exercises, while the site listens and checks you note by note.")+'</p>';
+    h+=codeForm()+'<div class="btns" style="justify-content:center;margin-top:8px"><a class="btn sec" href="#instrument">'+L("الدرس المجاني","Free lesson")+'</a></div>';
+  }
+  return h+'</div></div>'+pager(id);
+}
+
+/* ---- stage test (strict: every note must be heard) ---- */
+var TEST={on:false,i:0,n:0,list:null,t0:0,sc:[],st:0};
+function testList(st){ return STAGES[st-1].test.map(function(m){ return {m:m,w:spellQ(m)}; }); }
+function testPanel(st){
+  var L0=testList(st);
+  var h='<div class="studio">'+diagramHTML("dg-test")+'<div class="panel" id="test-panel"><div class="big">'+L("اختبار المرحلة ","Stage test ")+num(st)+'</div>';
+  h+='<p style="color:#d9cdbd;margin-top:6px">'+L("اعزف النوتات بالترتيب. الموقع ما يعبّر لنوتة اللي بعدها إلا من يسمع اللي قبلها صحيحة. كل ما كنت أسرع وأدق، درجتك تصير أعلى.","Play the notes in order. The site moves on only after it hears each note correctly; the quicker and steadier you are, the higher your score.")+'</p>';
+  h+='<div class="ex-seq" id="test-seq">'+L0.map(function(n,i){ return '<button type="button" class="exn'+(n.w.a%1?' q':'')+'" data-tn="'+i+'"><b>'+nmShort(n.w)+'<sub>'+num(n.w.o)+'</sub></b></button>'; }).join("")+'</div>';
+  h+='<div class="btns"><button class="btn" type="button" id="test-go">'+L("ابدي الاختبار","Start the test")+'</button><button class="btn sec" type="button" id="test-stop" disabled>'+L("إيقاف","Stop")+'</button></div><div id="test-live" class="ex-live" aria-live="polite"></div></div></div>';
+  return h;
+}
+function testShow(i){
+  TEST.i=i; var n=TEST.list[i]; if(!n) return; setFingers("dg-test",fingerFor(n.m).list);
+  document.querySelectorAll("[data-tn]").forEach(function(b){ var k=+b.getAttribute("data-tn"); b.classList.toggle("now",k===i); b.classList.toggle("done",TEST.on&&k<i); });
+}
+function testStop(){ if(TEST.on) pitchStop(); TEST.on=false; var g=document.getElementById("test-go"),s=document.getElementById("test-stop"); if(g) g.disabled=false; if(s) s.disabled=true; }
+function testStart(st){
+  testStop(); TEST.st=st; TEST.list=testList(st); TEST.sc=[]; var lv=document.getElementById("test-live");
+  document.getElementById("test-go").disabled=true; document.getElementById("test-stop").disabled=false;
+  lv.innerHTML=L("جاي أشغّل المايك…","Starting the microphone…");
+  pitchStart(function(err){
+    if(err){ lv.innerHTML='<span class="rose">'+err+'</span>'; testStop(); return; }
+    TEST.on=true; var i=0, hold=0, lastT=performance.now(), nt=performance.now(); testShow(0);
+    PITCH.onframe=function(f){
+      if(!TEST.on) return; var now=performance.now(), dt=(now-lastT)/1000; lastT=now; var n=TEST.list[i], msg='<b>'+L("اعزف: ","Play: ")+nmLong(n.w)+'</b>';
+      if(f>0){ var wm=hz2midi(f)+INST[inst].t, dc=(wm-n.m)*100, tol=n.w.a%1?32:24;
+        msg+=' · '+L("تسمع: ","hearing: ")+nmLong(spellQ(wm))+' <span class="ltr">'+(dc>0?"+":"")+Math.round(dc)+'¢</span>';
+        if(Math.abs(dc)<=tol){ hold+=dt; msg+=' <span class="ok">✓</span>'; } else hold=Math.max(0,hold-dt*2);
+      } else { hold=Math.max(0,hold-dt); msg+=' · '+L("ما دا أسمع صوت","no sound yet"); }
+      if(hold>=0.35){ hold=0; var took=(now-nt)/1000; nt=now; TEST.sc.push(took<=4?100:Math.max(40,100-(took-4)*5)); i++;
+        if(i>=TEST.list.length){ testStop(); var score=TEST.sc.reduce(function(a,b){return a+b;},0)/TEST.sc.length, pass=score>=80;
+          accReport("test:stage"+st,score,{per:TEST.sc.map(Math.round),inst:inst});
+          document.getElementById("test-live").innerHTML='<b class="'+(pass?'ok':'rose')+'">'+L("درجتك: ","Your score: ")+num(Math.round(score))+'/١٠٠</b><br>'+(pass?L("نجحت بالاختبار! النتيجة وصلت للأستاذ، وهو يفتحلك المرحلة الجاية ويه التجديد.","You passed! Your result has been sent to your teacher, who opens the next stage with your renewal."):L("تحتاج ٨٠ حتى تنجح. تمرّن شوية وعيد الاختبار، تگدر تعيده شگد ما تريد.","You need 80 to pass. Practise a little and try again, as often as you like."));
+          return; }
+        testShow(i); }
+      var lv3=document.getElementById("test-live"); if(lv3) lv3.innerHTML=msg+'<div class="small" style="margin-top:6px">'+L("النوتة ","Note ")+num(i+1)+L(" من "," of ")+num(TEST.list.length)+'</div>';
+    };
+  });
+}
+
+/* ---- my course ---- */
+function vCourse(){
+  var h=pageHead("course",L("مسيرتي","My course"),L("الدورة خمس مراحل. كل مرحلة تنفتح ويه الاشتراك الشهري، وبآخرها اختبار يسمعك بيه الموقع.","The course has five stages. Each opens with the monthly membership, and ends with a test where the site listens to you."));
+  var st=ACC.mode==="owner"?5:(ACC.mode==="member"?ACC.realStage:0);
+  h+='<div class="block">';
+  if(ACC.mode==="visitor"){
+    h+='<div class="panel locked" style="margin-bottom:22px"><div class="lk-ic">'+lockIcon(30)+'</div><h2>'+L("عندك كود اشتراك؟","Have a membership code?")+'</h2><p>'+L("اكتبه هنا. الكود يشتغل على جهاز واحد، ويبدي الشهر من أول دخول.","Enter it here. A code works on one device, and the month starts from the first sign-in.")+'</p>'+codeForm()+'</div>';
+  } else if(ACC.mode==="member"){
+    h+='<div class="panel acc-card"><div><div class="overline">'+L("أهلاً","Welcome")+'</div><div class="big">'+ACC.name+'</div></div>';
+    h+='<div class="acc-meta"><span class="tag">'+L("المرحلة ","Stage ")+num(ACC.realStage)+L(" من ٥"," of 5")+'</span>'+(ACC.active?'<span class="tag cer">'+L("باقي ","")+num(ACC.days)+L(" يوم"," days left")+'</span>':'<span class="tag rose">'+L("الاشتراك خلص","Membership ended")+'</span>')+'<button class="linkbtn small" type="button" id="acc-out">'+L("خروج","Sign out")+'</button></div></div>';
+    if(!ACC.active) h+='<p class="rose" style="margin:12px 0">'+L("اشتراكك خلص. راسلنا حتى نجدده، وتقدّمك محفوظ.","Your membership has ended. Contact us to renew; your progress is saved.")+'</p>';
+    if(ACC.err) h+='<p class="rose small">'+ACC.err+'</p>';
+  }
+  h+='<div class="stages">'+STAGES.map(function(s){
+    var state=s.n<st?"done":(s.n===st?"now":"locked"), open=ACC.mode==="owner"||(ACC.mode==="member"&&ACC.active&&s.n<=st);
+    var best=ACC.results.filter(function(r){return r.item==="test:stage"+s.n;}).reduce(function(a,r){return Math.max(a,+r.score);},-1);
+    return '<div class="stg '+state+'"><span class="sn">'+(state==="locked"&&!open?lockIcon(16):num(s.n))+'</span><div><b>'+L(s.t[0],s.t[1])+'</b><span class="d">'+L(s.d[0],s.d[1])+'</span>'+(best>=0?'<span class="small '+(best>=80?'ok':'rose')+'">'+L("أعلى درجة بالاختبار: ","Best test score: ")+num(best)+'</span>':'')+'</div>'+(open?'<button class="btn sec" type="button" data-stest="'+s.n+'">'+L("الاختبار","Test")+'</button>':'')+'</div>';
+  }).join("")+'</div>';
+  h+='<div id="test-area"></div></div>';
+  return h+pager("course");
+}
+function bindCourse(){
+  var f=document.getElementById("code-form"); if(f) f.onsubmit=function(e){ e.preventDefault(); memberLogin(document.getElementById("code-in").value); render(); };
+  var o=document.getElementById("acc-out"); if(o) o.onclick=memberLogout;
+  document.querySelectorAll("[data-stest]").forEach(function(b){ b.onclick=function(){ testStop(); var s=+b.getAttribute("data-stest"); document.getElementById("test-area").innerHTML=testPanel(s); testShow(0);
+    document.getElementById("test-go").onclick=function(){ testStart(s); }; document.getElementById("test-stop").onclick=testStop;
+    document.querySelectorAll("[data-tn]").forEach(function(x){ x.onclick=function(){ if(!TEST.on){ var k=+x.getAttribute("data-tn"); testShow(k); playMidi(TEST.list[k].m-INST[inst].t,0.8); } }; });
+    document.getElementById("test-area").scrollIntoView({behavior:"smooth",block:"start"}); }; });
+}
+
+/* ---- owner: control panel ---- */
+var ADM={subs:[],res:[],q:"",msg:"",open:null};
+function vAdmin(){
+  var h=pageHead("admin",L("لوحة التحكم","Control panel"),L("أكواد المشتركين، نتائجهم، والتجديد.","Member codes, results and renewals."));
+  h+='<div class="block"><div class="panel"><div class="big" style="font-size:1.25rem">'+L("كود جديد","New code")+'</div><form id="adm-new" class="adm-form">';
+  h+='<input id="an-name" required placeholder="'+L("اسم المشترك","Member name")+'"><input id="an-phone" placeholder="'+L("الهاتف (اختياري)","Phone (optional)")+'" class="ltr">';
+  h+='<select id="an-stage">'+STAGES.map(function(s){return'<option value="'+s.n+'">'+L("المرحلة ","Stage ")+num(s.n)+'</option>';}).join("")+'</select>';
+  h+='<select id="an-days"><option value="30">'+L("٣٠ يوم","30 days")+'</option><option value="7">'+L("٧ أيام (تجربة)","7 days (trial)")+'</option><option value="60">'+L("٦٠ يوم","60 days")+'</option></select>';
+  h+='<input id="an-note" placeholder="'+L("ملاحظة","Note")+'"><button class="btn" type="submit">'+L("سوّي الكود","Create code")+'</button></form><div id="adm-msg">'+ADM.msg+'</div></div>';
+  h+='<div class="row" style="justify-content:space-between;margin:22px 0 10px"><div class="big" style="font-size:1.25rem">'+L("المشتركين","Members")+' <span class="tag">'+num(ADM.subs.length)+'</span></div><input id="adm-q" placeholder="'+L("بحث بالاسم أو الكود","Search name or code")+'" value="'+ADM.q+'" style="max-width:240px"></div>';
+  h+='<div id="adm-list"></div><p class="small" style="margin-top:14px"><button class="linkbtn" type="button" id="own-out">'+L("تسجيل خروج من لوحة التحكم","Sign out of the control panel")+'</button></p></div>';
+  return h;
+}
+function admSuggest(s){
+  var best=ADM.res.filter(function(r){return r.subscriber_id===s.id&&r.item==="test:stage"+s.stage;}).reduce(function(a,r){return Math.max(a,+r.score);},-1);
+  if(best>=80) return {st:Math.min(5,s.stage+1),why:L("نجح باختبار مرحلته ("+num(best)+")","Passed the stage test ("+best+")")};
+  if(best>=0) return {st:s.stage,why:L("أعلى درجة "+num(best)+"، يحتاج ٨٠","Best score "+best+", needs 80")};
+  return {st:s.stage,why:L("بعده ما سوّى الاختبار","Hasn’t taken the test yet")};
+}
+function fmtD(d){ if(!d) return "—"; var x=new Date(d); return x.toLocaleDateString(lang==="ar"?"ar-IQ":"en-GB",{day:"numeric",month:"short",year:"numeric"}); }
+function renderAdmList(){
+  var box=document.getElementById("adm-list"); if(!box) return; var q=ADM.q.trim().toLowerCase();
+  var list=ADM.subs.filter(function(s){ return !q||(s.name||"").toLowerCase().indexOf(q)>=0||s.code.toLowerCase().indexOf(q)>=0||(s.phone||"").indexOf(q)>=0; });
+  if(!list.length){ box.innerHTML='<p class="small">'+L("ماكو مشتركين بعد.","No members yet.")+'</p>'; return; }
+  box.innerHTML=list.map(function(s){
+    var act=s.expires_at&&new Date(s.expires_at)>new Date(), sg=admSuggest(s), rs=ADM.res.filter(function(r){return r.subscriber_id===s.id;});
+    var status=!s.device_id&&!s.expires_at?'<span class="tag">'+L("بعده ما فعّله","Not used yet")+'</span>':(act?'<span class="tag cer">'+L("فعّال لحد ","Active until ")+fmtD(s.expires_at)+'</span>':'<span class="tag rose">'+L("منتهي ","Ended ")+fmtD(s.expires_at)+'</span>');
+    var h='<div class="panel adm-sub"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>'+s.name+'</b> <span class="ltr code">'+s.code+'</span>'+(s.phone?' <span class="small ltr">'+s.phone+'</span>':'')+'</div><div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag">'+L("المرحلة ","Stage ")+num(s.stage)+'</span>'+status+'</div></div>';
+    h+='<div class="small" style="margin-top:6px">'+L("الاقتراح: ","Suggestion: ")+'<b>'+L("المرحلة ","stage ")+num(sg.st)+'</b> · '+sg.why+(s.note?' · '+s.note:'')+'</div>';
+    if(rs.length) h+='<div class="adm-res">'+rs.slice(0,8).map(function(r){ return '<span class="'+(+r.score>=80?'ok':'rose')+'">'+r.item.replace("test:stage",L("اختبار ","test "))+' · '+num(Math.round(+r.score))+'</span>'; }).join("")+'</div>';
+    h+='<div class="adm-act"><select data-rs="'+s.id+'">'+STAGES.map(function(x){return'<option value="'+x.n+'"'+(x.n===sg.st?' selected':'')+'>'+L("المرحلة ","Stage ")+num(x.n)+'</option>';}).join("")+'</select><button class="btn" type="button" data-renew="'+s.id+'">'+L("جدّد ٣٠ يوم","Renew 30 days")+'</button><button class="btn sec" type="button" data-copy="'+s.code+'">'+L("انسخ الكود","Copy code")+'</button>'+(s.device_id?'<button class="btn sec" type="button" data-reset="'+s.id+'">'+L("فك الجهاز","Release device")+'</button>':'')+'</div></div>';
+    return h; }).join("");
+}
+function admLoad(){
+  return Promise.all([adm("/rest/v1/subscribers?select=*&order=created_at.desc"),adm("/rest/v1/results?select=subscriber_id,item,score,stage,created_at&order=created_at.desc&limit=2000")])
+    .then(function(r){ ADM.subs=r[0]||[]; ADM.res=r[1]||[]; renderAdmList(); var c=document.querySelector(".big .tag"); if(c) c.textContent=num(ADM.subs.length); })
+    .catch(function(e){ var m=document.getElementById("adm-msg"); if(m) m.innerHTML='<span class="rose">'+accErr(e.message)+'</span>'; });
+}
+function bindAdmin(){
+  admLoad();
+  document.getElementById("own-out").onclick=ownerLogout;
+  document.getElementById("adm-q").oninput=function(e){ ADM.q=e.target.value; renderAdmList(); };
+  document.getElementById("adm-new").onsubmit=function(e){ e.preventDefault(); var g=function(i){return document.getElementById(i).value.trim();};
+    adm("/rest/v1/rpc/admin_new_code",{p_name:g("an-name"),p_phone:g("an-phone")||null,p_stage:+g("an-stage"),p_days:+g("an-days"),p_note:g("an-note")||null}).then(function(s){
+      ADM.msg='<p class="ok" style="margin-top:10px">'+L("الكود جاهز: ","Code ready: ")+'<b class="ltr code big-code">'+s.code+'</b> <button class="btn sec" type="button" data-copy="'+s.code+'">'+L("انسخ","Copy")+'</button></p>';
+      document.getElementById("adm-msg").innerHTML=ADM.msg; document.getElementById("adm-new").reset(); admLoad();
+    }).catch(function(e2){ document.getElementById("adm-msg").innerHTML='<p class="rose">'+accErr(e2.message)+'</p>'; }); };
+  document.getElementById("adm-list").onclick=function(e){ var b;
+    if((b=e.target.closest("[data-renew]"))){ var id=b.getAttribute("data-renew"), st=+document.querySelector('[data-rs="'+id+'"]').value; b.disabled=true;
+      adm("/rest/v1/rpc/admin_renew",{p_id:id,p_stage:st,p_days:30}).then(admLoad).catch(function(e2){ alertMsg(accErr(e2.message)); }); }
+    else if((b=e.target.closest("[data-reset]"))){ if(!window.confirm(L("أفك الكود من الجهاز الحالي حتى يگدر المشترك يدخل من جهاز ثاني؟","Release this code from its current device so the member can sign in on another?"))) return;
+      adm("/rest/v1/rpc/admin_reset_device",{p_id:b.getAttribute("data-reset")}).then(admLoad); }
+  };
+}
+function alertMsg(m){ var x=document.getElementById("adm-msg"); if(x) x.innerHTML='<p class="rose">'+m+'</p>'; }
+document.addEventListener("click",function(e){ var b=e.target.closest("[data-copy]"); if(b){ var c=b.getAttribute("data-copy"); (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(function(){ b.textContent=L("انتسخ ✓","Copied ✓"); }).catch(function(){ window.prompt("",c); }); } });
+
+/* ---- owner sign-in (studio) ---- */
+function vOwnerLogin(){
+  var h='<div class="block" style="padding-top:40px"><div class="panel locked"><div class="lk-ic">'+lockIcon(30)+'</div><h2>'+L("دخول صاحب الموقع","Owner sign-in")+'</h2><p>'+L("هذي النسخة الكاملة ويه لوحة التحكم.","The full version with the control panel.")+'</p>';
+  h+='<form id="own-form" class="own-form"><input type="email" id="own-email" required autocomplete="username" placeholder="'+L("الإيميل","Email")+'" class="ltr"><input type="password" id="own-pass" required autocomplete="current-password" placeholder="'+L("الباسورد","Password")+'" class="ltr"><button class="btn" type="submit"'+(ACC.busy?' disabled':'')+'>'+(ACC.busy?L("لحظة…","One moment…"):L("دخول","Sign in"))+'</button></form>'+(ACC.err?'<p class="rose small" style="margin-top:8px">'+ACC.err+'</p>':'')+'</div></div>';
+  return h;
+}
+function bindOwnerLogin(){ var f=document.getElementById("own-form"); if(f) f.onsubmit=function(e){ e.preventDefault(); ownerLogin(document.getElementById("own-email").value.trim(),document.getElementById("own-pass").value); }; }
+
+/* ---- maqam chips gating ---- */
+function lockMqChips(){ document.querySelectorAll("[data-mq],[data-exmq]").forEach(function(b){ var id=b.getAttribute("data-mq")||b.getAttribute("data-exmq"); if(!mqOpen(id)){ b.classList.add("mq-lk"); b.title=L("ينفتح بالمرحلة ","Opens at stage ")+num(MQ_STAGE[id]); } }); }
+document.addEventListener("click",function(e){ var b=e.target.closest(".mq-lk"); if(b){ e.stopPropagation(); e.preventDefault(); var id=b.getAttribute("data-mq")||b.getAttribute("data-exmq"); b.classList.add("shake"); setTimeout(function(){b.classList.remove("shake");},450); var p=document.getElementById(b.hasAttribute("data-mq")?"maqam-panel":"ex-live"); if(p&&!b.hasAttribute("data-mq")) p.innerHTML='<span class="rose">'+L("مقام ","Maqam ")+b.textContent+L(" ينفتح بالمرحلة "," opens at stage ")+num(MQ_STAGE[id])+'</span>'; } },true);
+function firstOpenMq(cur){ if(mqOpen(cur)) return cur; for(var i=0;i<MAQAM.length;i++) if(mqOpen(MAQAM[i].id)) return MAQAM[i].id; return cur; }
+
 function pageHead(id,title,lead){
   var i=idx(id);
   return '<div class="overline">'+L("الدرس ","Lesson ")+num(i)+L(" من "," of ")+num(ROUTES.length-1)+'</div><h1 class="page-title">'+title+'</h1>'+(lead?'<p class="page-lead">'+lead+'</p>':'');
@@ -1167,12 +1409,12 @@ function exMic(){
         if(Math.abs(dc)<=tol){ hold+=dt; msg+=' <span class="ok">✓</span>'; } else hold=Math.max(0,hold-dt*2);
         if(Math.abs(dc)>tol&&Math.abs(dc)<150) msg+='<br><span class="small">'+(dc>0?L("عالي شوية، رخّي الشفة","A bit sharp: relax the lip"):L("واطي شوية، شدّ الشفة أو زيد الهوا","A bit flat: firm the lip or support more air"))+'</span>';
       } else { hold=Math.max(0,hold-dt); msg+=' · '+L("ما دا أسمع صوت","no sound yet"); }
-      if(hold>=0.28){ hold=0; EX.hit++; i++; if(i>=E.list.length){ stopEx(); var lv2=document.getElementById("ex-live"); if(lv2) lv2.innerHTML='<b class="ok">'+L("أحسنت! خلصت التمرين كله: "+num(E.list.length)+" نوتة.","Well done! You played all "+E.list.length+" notes.")+'</b> '+L("جرّب تسرّع شوية أو انتقل للتمرين اللي بعده.","Try it a little faster, or move to the next exercise."); document.querySelectorAll(".exn").forEach(function(b){ b.classList.add("done"); b.classList.remove("now"); }); return; } exShow(i,false); }
-      var lv3=document.getElementById("ex-live"); if(lv3) lv3.innerHTML=msg+'<div class="small" style="margin-top:6px">'+L("النوتة ","Note ")+num(i+1)+L(" من "," of ")+num(E.list.length)+' · <button type="button" class="linkbtn" id="ex-skip">'+L("تخطّي","Skip")+'</button></div>';
+      if(hold>=0.28){ hold=0; EX.hit++; i++; if(i>=E.list.length){ stopEx(); accReport(E.piece?'piece:'+E.piece.id:'ex:'+EX.mq+':'+EX.i,100,{n:E.list.length,inst:inst}); var lv2=document.getElementById("ex-live"); if(lv2) lv2.innerHTML='<b class="ok">'+L("أحسنت! خلصت التمرين كله: "+num(E.list.length)+" نوتة.","Well done! You played all "+E.list.length+" notes.")+'</b> '+L("جرّب تسرّع شوية أو انتقل للتمرين اللي بعده.","Try it a little faster, or move to the next exercise."); document.querySelectorAll(".exn").forEach(function(b){ b.classList.add("done"); b.classList.remove("now"); }); return; } exShow(i,false); }
+      var lv3=document.getElementById("ex-live"); if(lv3) lv3.innerHTML=msg+'<div class="small" style="margin-top:6px">'+L("النوتة ","Note ")+num(i+1)+L(" من "," of ")+num(E.list.length)+(ACC.mode==="owner"?' · <button type="button" class="linkbtn" id="ex-skip">'+L("تخطّي","Skip")+'</button>':'')+'</div>';
     };
   });
 }
-document.addEventListener("click",function(e){ if(e.target&&e.target.id==="ex-skip"&&EX.mode==="mic"&&EX.notes){ var i=EX.cur+1; if(i<EX.notes.list.length) exShow(i,false); } });
+document.addEventListener("click",function(e){ if(e.target&&e.target.id==="ex-skip"&&ACC.mode==="owner"&&EX.mode==="mic"&&EX.notes){ var i=EX.cur+1; if(i<EX.notes.list.length) exShow(i,false); } });
 function stopEx(){ if(EX.raf) cancelAnimationFrame(EX.raf); EX.raf=0; stopAllSound(); if(EX.mode==="mic") pitchStop(); EX.mode=null; exButtons(false); }
 
 /* ================= pitch engine (tuner + play-along) ================= */
@@ -1488,7 +1730,7 @@ function renderChrome(cur){
   document.getElementById("inst-seg").setAttribute("aria-label",L("نوع الآلة","Instrument"));
   document.querySelectorAll("#inst-seg button").forEach(function(b){ b.setAttribute("aria-pressed",b.getAttribute("data-inst")===inst?"true":"false"); });
   document.querySelectorAll("#lang-seg button").forEach(function(b){ b.setAttribute("aria-pressed",b.getAttribute("data-lang")===lang?"true":"false"); });
-  document.getElementById("topnav").innerHTML=[["instrument",L("تعلّم","Learn")],["notes",L("الأصابع","Fingerings")],["maqamat",L("المقامات","Maqams")],["practice",L("المقطوعات","Pieces")],["tools",L("التيونر","Tuner")],["analyzer",L("المحلل","Analyzer")],["glossary",L("القاموس","Glossary")]].map(function(x){ return '<a href="#'+x[0]+'"'+(x[0]===cur?' aria-current="page"':'')+'>'+x[1]+'</a>'; }).join("");
+  document.getElementById("topnav").innerHTML=[["instrument",L("تعلّم","Learn")],["notes",L("الأصابع","Fingerings")],["maqamat",L("المقامات","Maqams")],["practice",L("المقطوعات","Pieces")],["tools",L("التيونر","Tuner")],["analyzer",L("المحلل","Analyzer")],["glossary",L("القاموس","Glossary")],["course",L("مسيرتي","My course")]].map(function(x){ return '<a href="#'+x[0]+'"'+(x[0]===cur?' aria-current="page"':'')+'>'+x[1]+'</a>'; }).join("");
   var r='<h4>'+L("الدروس","Lessons")+'</h4>';
   ROUTES.slice(1).forEach(function(x,i){ r+='<a href="#'+x.id+'"'+(x.id===cur?' aria-current="page"':'')+'><span class="n">'+num(i+1)+'</span><span><b>'+L(x.t[0],x.t[1])+'</b><span class="d">'+L(x.d[0],x.d[1])+'</span></span></a>'; });
   r+='<div class="inst-box">'+pic(inst,"")+'<div><span class="small">'+L("آلتك","Your instrument")+'</span><br><b class="rose" style="font-family:var(--display)">'+instName(inst)+'</b><br><span class="small">'+(inst==="G"?L("ألبرت · دو ← صول","Albert · C → G"):L("بوهم · دو ← سي♭","Boehm · C → B♭"))+'</span></div></div>';
@@ -1590,24 +1832,28 @@ window.addEventListener("resize",stScroll);
 requestAnimationFrame(stTick);
 
 function render(){
-  stopChrom(); stopMaqam(); hidePop(); stopAnPlay(); stopEx(); stopTools();
+  stopChrom(); stopMaqam(); hidePop(); stopAnPlay(); stopEx(); stopTools(); testStop();
   var cur=route(); renderChrome(cur); document.body.classList.toggle("home",cur==="start");
-  var vf={start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur];
-  var v=FREE_ROUTES[cur]?vf():vLocked(cur);
+  if(gate==="ok"&&cur==="maqamat") curMaqam=firstOpenMq(curMaqam); if(cur==="practice") EX.mq=firstOpenMq(EX.mq);
+  var gate=IS_STUDIO&&ACC.mode!=="owner"?"login":(cur==="course"?"course":(cur==="admin"?(canSee("admin")?"admin":"lock"):(canSee(cur)?"ok":"lock")));
+  var v=gate==="login"?vOwnerLogin():gate==="course"?vCourse():gate==="admin"?vAdmin():gate==="lock"?vLocked(cur):{start:vStart,instrument:vInstrument,basics:vBasics,notes:vNotes,maqamat:vMaqam,practice:vPractice,tools:vTools,analyzer:vAnalyzer,glossary:vGlossary}[cur]();
   document.getElementById("view").innerHTML=v;
   if(cur==="start"){ stLoad(); stScroll(); document.getElementById("st-snd").onclick=musToggle; }
   else { var tb=document.querySelector(".topbar"); if(tb) tb.classList.remove("solid"); }
-  if(FREE_ROUTES[cur]&&cur==="notes") selectNote(curNote,false);
-  if(FREE_ROUTES[cur]&&cur==="maqamat") renderMaqam();
-  if(FREE_ROUTES[cur]&&cur==="practice") renderEx();
-  if(FREE_ROUTES[cur]&&cur==="tools") bindTools();
-  if(FREE_ROUTES[cur]&&cur==="glossary"){ renderGloss(); var gs=document.getElementById("gsearch"); gs.value=gq; gs.oninput=function(){ gq=gs.value; renderGloss(); };
+  if(gate==="ok"&&cur==="notes") selectNote(curNote,false);
+  if(gate==="ok"&&cur==="maqamat") renderMaqam();
+  if(gate==="ok"&&cur==="practice") renderEx();
+  if(gate==="course") bindCourse(); if(gate==="admin") bindAdmin(); if(gate==="login") bindOwnerLogin();
+  if(gate==="lock"){ var cf=document.getElementById("code-form"); if(cf) cf.onsubmit=function(e){ e.preventDefault(); memberLogin(document.getElementById("code-in").value); render(); }; }
+  if(gate==="ok"&&(cur==="maqamat"||cur==="practice")) lockMqChips();
+  if(gate==="ok"&&cur==="tools") bindTools();
+  if(gate==="ok"&&cur==="glossary"){ renderGloss(); var gs=document.getElementById("gsearch"); gs.value=gq; gs.oninput=function(){ gq=gs.value; renderGloss(); };
     document.querySelectorAll("#gfilter button").forEach(function(b){ b.setAttribute("aria-pressed",b.getAttribute("data-c")===gc?"true":"false"); }); }
-  if(cur==="instrument"){
+  if(gate==="ok"&&cur==="instrument"){
     document.getElementById("demo12").onclick=function(){ var d=INST[inst]; playMidi(52-d.t,0.9); playMidi(71-d.t,1.1,1.0); };
     document.getElementById("demoT").onclick=function(){ var d=INST[inst]; playMidi(60,0.9); playMidi(60-d.t,1.1,1.0); };
   }
-  if(FREE_ROUTES[cur]&&cur==="analyzer"){
+  if(gate==="ok"&&cur==="analyzer"){
     var fi=document.getElementById("an-file"), dz=document.getElementById("drop");
     fi.onchange=function(){ if(fi.files[0]) analyzeBlob(fi.files[0],fi.files[0].name); };
     dz.ondragover=function(e){ e.preventDefault(); dz.classList.add("over"); };
@@ -1649,6 +1895,7 @@ function hidePop(){ pop.style.display="none"; }
 document.addEventListener("pointerdown",function pre(){ if(ensureAudio()) loadSamples(); document.removeEventListener("pointerdown",pre,true); },true);
 lastRoute=route();
 render();
+if(IS_STUDIO) ownerStart(); else if(accCode()) memberLogin(accCode(),true);
 
 })();
 </script>
